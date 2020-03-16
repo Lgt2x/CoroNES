@@ -20,15 +20,6 @@ using namespace std;
  * a : indirect
  * b : parsing error
  *
- * Accumulator  0
- * Immediate    2
- * Zero page    3
- * Zero page, X 6
- * Absolute     1
- * Absolute, X  4
- * Absolute, Y  5
- * Indirect, X  8
- * Indirect, Y  9
  * @param addr string corresponding to the adress in the assembly code
  * @return the adressing modes stored as a char, given the correpondance above
  */
@@ -36,7 +27,7 @@ char addressingMode(string addr) {
     if (addr.length() == 0) {
         // Nothing after the instruction : Accumulator or implied
         return 0;
-    }  else if (addr.length() == 5 && addr[0] == '$' && addr[3] == ',') {
+    } else if (addr.length() == 5 && addr[0] == '$' && addr[3] == ',') {
         if (addr[4] == 'X' || addr[4] == 'x') {
             // $XX,x : zero page indexed with X
             return 6;
@@ -76,6 +67,7 @@ char addressingMode(string addr) {
         // parsing error
         return 0xb;
     }
+    return 0xb;
 }
 
 /**
@@ -84,25 +76,42 @@ char addressingMode(string addr) {
  * @param mode addressing mode
  * @return register value, 1 or 2 bytes depending on the addressing mode
  */
-int addressValue(const string& addr, char mode) {
-    if (mode == 0) {
-        return 0;
-    } else if (mode == 1) {
-        return stoi(addr.substr(1), 0,16);
-    } else if (mode == 2) {
-        return stoi(addr.substr(2), 0,16);
-    } else if (mode == 3) {
-        return stoi(addr.substr(1), 0,16);
-    } else if (mode == 4 || mode == 5) {
-        return stoi(addr.substr(1, 4), 0,16);
-    } else if (mode == 6 || mode == 7) {
-        return stoi(addr.substr(1, 2), 0,16);
-    } else if (mode == 8 || mode == 9) {
-        return stoi(addr.substr(2, 2), 0,16);
-    } else if (mode == 10) {
-        return stoi(addr.substr(2, 4), 0,16);
+int addressValue(const string &addr, char mode) {
+    unsigned int value = 0;
+
+    switch (mode) {
+        case 0:
+            value = 0;
+            break;
+        case 1:
+            value = stoi(addr.substr(1), 0, 16);
+            break;
+        case 2:
+            value = stoi(addr.substr(2), 0, 16);
+            break;
+        case 3:
+            value = stoi(addr.substr(1), 0, 16);
+            break;
+        case 4:
+        case 5:
+            value = stoi(addr.substr(1, 4), 0, 16);
+            break;
+        case 6:
+        case 7:
+            value = stoi(addr.substr(1, 2), 0, 16);
+            break;
+        case 8:
+        case 9:
+            value = stoi(addr.substr(2, 2), 0, 16);
+            break;
+        case 10:
+            value = stoi(addr.substr(2, 4), 0, 16);
+            break;
+        default:
+            value = 0;
     }
-    return 0;
+
+    return value;
 }
 
 
@@ -113,9 +122,8 @@ int addressValue(const string& addr, char mode) {
  * @param mode addressing mode used along with the instruction
  * @return 1 byte corresponding to the instruction
  */
-unsigned char instruction(string instruction, char mode) {
+unsigned char opcode(string instruction, char mode) {
     if (instruction == "ADC") {
-        // ADC : ADd with Carry
         switch (mode) {
             case 1:
                 return 0x6D;
@@ -354,7 +362,7 @@ unsigned char instruction(string instruction, char mode) {
             case 5:
                 return 0xBE;
             case 7:
-                return 0xB6
+                return 0xB6;
         }
     } else if (instruction == "LDY") {
         // LDY (LoaD Y register
@@ -387,7 +395,7 @@ unsigned char instruction(string instruction, char mode) {
     } else if (instruction == "NOP" && mode == 0) {
         // NOP : No OPeration
         return 0xEA;
-    }  else if (instruction == "ORA") {
+    } else if (instruction == "ORA") {
         // ORA : bitwise OR with Accumulator
         switch (mode) {
             case 1:
@@ -549,8 +557,8 @@ unsigned char instruction(string instruction, char mode) {
 
 
 int main(int argc, char **argv) {
-    ifstream file;
-    file.open("prgm.asm");
+    ifstream file("prgm.asm");
+    ofstream dest("rom.nes", ios::binary);
 
     if (!file) {
         cerr << "Unable to open program";
@@ -560,16 +568,21 @@ int main(int argc, char **argv) {
     string line;
     while (getline(file, line)) {
         istringstream iss(line);
-
         string command, addressing;
-        if (!(iss >> command >> addressing)) {
-            addressing = "";
-        }
+        if (!(iss >> command >> addressing)) { addressing = ""; }
+
         char mode = addressingMode(addressing);
         int value = addressValue(addressing, mode);
-        cout << (int)(mode) << " " << std::hex << value << "\n";
+        unsigned char code = opcode(command, mode);
 
+        dest << code << (char)value;
+        if (mode == 1 || mode == 4 || mode == 5 || mode == 10) {
+            dest  << (char)(value>>8);
+        }
     }
+
+    dest.close();
+    file.close();
 
     return 0;
 }
