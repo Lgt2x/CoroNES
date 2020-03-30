@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstring>
 
 using namespace std;
 
@@ -555,16 +556,75 @@ unsigned char opcode(string instruction, char mode) {
     return 0xFF;
 }
 
+/**
+ * Print utility help page
+ */
+void help() {
+    cout << "CoroNES Assembler v0.1 by Louis Gombert/Lgt2x, 2020\n"
+            "Assembles assembly code to binary executable, readable by a 6502 emulator"
+            "Usage : assembler [-o <outfile>] <infile>\n"
+            "\n"
+            "Options :\n"
+            "-o <outfile>                   Specify output file, default is stdout\n"
+            "-h, --help                     Shows this help\n\n";
+
+    exit(0);
+}
 
 int main(int argc, char **argv) {
-    ifstream file("prgm.asm");
-    ofstream dest("rom.nes", ios::binary);
+    /**** Reading Command line arguments ****/
+    string inFile = "";
+    string outputFile = "";
 
-    if (!file) {
-        cerr << "Unable to open program";
+    // No input file given : can't assemble
+    if (argc < 2) {
+        cerr << "Not enough arguments provided. \n Try --help for more information.";
         return 1;
     }
 
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "-h" || arg == "--help" ) {
+            help();
+            exit(0);
+        }
+        if (arg == "-o" ) {
+            // -o <output> <input>
+            if (i < argc - 2) {
+                outputFile = argv[i + 1];
+                i++;
+            } else {
+                cerr << "No input file specified.\n Try '--help' for more information.\n";
+                return 1;
+            }
+        } else {
+            if (i < argc - 1) {
+                cerr << "Unrecognized argument \"" << argv[i] << "\"\n Try --help for more information.\n";
+                return 1;
+            } else {
+                inFile = argv[i];
+            }
+        }
+    }
+
+    if (inFile == "") {
+        cerr << "No input file given. Try --help for more information.\n";
+    }
+
+    /**** Defining in and out streams ****/
+    ifstream file(inFile);
+
+    if (outputFile == "") {
+        outputFile = "rom.nes";
+    }
+    ofstream dest(outputFile, ios::binary);
+
+    if (!file) {
+        cerr << "Unable to open program \"" << argv[1] << "\"\n";
+        return 1;
+    }
+
+    /**** Read & assemble binary ****/
     string line;
     while (getline(file, line)) {
         istringstream iss(line);
@@ -575,9 +635,9 @@ int main(int argc, char **argv) {
         int value = addressValue(addressing, mode);
         unsigned char code = opcode(command, mode);
 
-        dest << code << (char)value;
+        dest << code << (char) value;
         if (mode == 1 || mode == 4 || mode == 5 || mode == 10) {
-            dest  << (char)(value>>8);
+            dest << (char) (value >> 8);
         }
     }
 
