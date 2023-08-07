@@ -1,15 +1,15 @@
-//
-// Created by louis on 20/01/23.
-//
-
 #ifndef NES_MAPPER_H
 #define NES_MAPPER_H
 
 
 #include <utility>
 
-#include "Cartridge.h"
+#include "../Cartridge.h"
 
+/**
+
+https://www.nesdev.org/wiki/Board_table
+ */
 class Mapper {
 public:
     explicit Mapper(Cartridge* cart): cart(cart) {};

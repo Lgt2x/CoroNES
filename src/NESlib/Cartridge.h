@@ -1,7 +1,3 @@
-//
-// Created by louis on 17/01/23.
-//
-
 #ifndef NES_CARTRIDGE_H
 #define NES_CARTRIDGE_H
 
@@ -9,11 +5,14 @@
 #include <memory>
 #include <vector>
 
+/**
+ Reads iNES files
+ */
 class Cartridge {
 public:
-  Cartridge() = default;
+  explicit Cartridge(const std::string& filename);
   Cartridge(Cartridge& cartridge) = delete;
-  void loadCart(const std::string& filename);
+
   bool extended();
   const std::vector<uint8_t>& getPRG_ROM();
   const std::vector<uint8_t>& getCHR_ROM();

@@ -1,7 +1,3 @@
-//
-// Created by louis on 17/01/23.
-//
-
 #include "Cartridge.h"
 #include <fstream>
 #include <ios>
@@ -17,14 +13,15 @@ std::string print_hex(uint8_t a) {
     return ss.str();
 }
 
-void Cartridge::loadCart(const std::string& filename) {
+Cartridge::Cartridge(const std::string &filename) {
     std::ifstream file(filename,std::ios_base::binary|std::ios_base::in);
     std::vector<uint8_t>header(0x10,0);
     file.read(reinterpret_cast<char*>(&header[0]),0x10);
 
+    // First 3 bytes should be "NES" in ASCII
     if (header[0] == 0x4e && header[1] == 0x45 && header[2] == 0x53 && header[3] == 0x1a) {
         std::cout << "NES file identified" << std::endl;
-    }
+    } // TODO : exception
 
     auto PRG_ROM_size = header[4];
     auto CHR_ROM_size = header[5];
@@ -34,7 +31,9 @@ void Cartridge::loadCart(const std::string& filename) {
     auto flags9 = header[9];
     auto flags10 = header[10];
 
+    // Bits 4-7 of both ROM control bytes represent the mapper number upper and lower bits
     uint8_t mapper = (flags6 >> 4) | (flags7 & 0xF0);
+
     std::cout << "PRG ROM size = " << print_hex(PRG_ROM_size) << " * 16kB\n";
     std::cout << "CHR ROM size = " << print_hex(CHR_ROM_size) << " * 8kB\n";
     std::cout << "Mapper :  " << print_hex(mapper) << std::endl;

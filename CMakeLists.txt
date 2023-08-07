@@ -1,6 +1,10 @@
-cmake_minimum_required(VERSION 3.22)
-project(NES)
+cmake_minimum_required(VERSION 3.26)
+project(NES LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
-add_executable(NES main.cpp CPU.cpp CPU.h Parser.cpp Parser.h Bus.cpp Bus.h Cartridge.cpp Cartridge.h Mapper.cpp Mapper.h)
+add_subdirectory(src/NESlib)
+
+add_executable(emu src/main.cpp)
+
+target_link_libraries(emu PRIVATE NESlib)
