@@ -37,7 +37,7 @@ enum flags {
 };
 
 /******* Public functions *******/
-CPU_6502::CPU_6502(std::unique_ptr<Bus> &ram) : A(0), X(0), Y(0), PC(0x4000),
+CPU_6502::CPU_6502(Bus *ram) : A(0), X(0), Y(0), PC(0x4000),
                                                 flags({false, false, true, true, false, true, false, false}), SP(0xFD),
                                                 ram(ram),
                                                 reset_vector(0) {

@@ -1,7 +1,6 @@
-#ifndef NES_MAPPER_H
-#define NES_MAPPER_H
+#pragma once
 
-
+#include <cstdint>
 #include <utility>
 
 #include "../Cartridge.h"
@@ -12,12 +11,6 @@ https://www.nesdev.org/wiki/Board_table
  */
 class Mapper {
 public:
-    explicit Mapper(Cartridge* cart): cart(cart) {};
-    uint8_t readPRG(uint16_t address);
-    void writePRG(uint16_t address);
-private:
-    Cartridge* cart;
+    virtual uint8_t readPRG(uint16_t address) = 0;
+    virtual void writePRG(uint16_t address, uint8_t value) = 0;
 };
-
-
-#endif //NES_MAPPER_H

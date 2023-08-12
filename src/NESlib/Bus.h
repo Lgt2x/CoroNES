@@ -6,6 +6,7 @@
 #include "mapper/Mapper.h"
 
 /**
+NES Memory bus, using 2-bytes adresses.
 
  Memory map
  --------------------------
@@ -27,7 +28,8 @@
 
 class Bus {
 public:
-  explicit Bus(Mapper* mapper);
+  Bus(Mapper* mapper); // optional mapper ?
+
   Bus(Bus& bus) = delete;
   ~Bus();
 
@@ -37,6 +39,6 @@ public:
   template<typename T>static std::string print_hex(T a, int size);
   void printState(uint16_t start, uint16_t end);
 private:
-  std::vector<uint8_t> ram;
+  std::vector<uint8_t>* ram;
   Mapper *mapper;
 };

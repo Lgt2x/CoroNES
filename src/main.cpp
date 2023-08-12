@@ -1,18 +1,18 @@
 #include <memory>
 #include <string>
 
-#include "NESlib/CPU.h"
-#include "NESlib/Bus.h"
-#include "NESlib/Cartridge.h"
-#include "NESlib/mapper/Mapper.h"
+#include "CPU.h"
+#include "Bus.h"
+#include "Cartridge.h"
+#include "mapper/MapperNROM.h"
 
 int main(int argc, char* argv[]) {
     std::string filename = std::string(argv[1]);
     Cartridge cart{filename};
-    Mapper mapper(&cart);
+    MapperNROM mapper(&cart);
 
     auto bus = std::make_unique<Bus>(&mapper);
-    auto cpu = std::make_unique<CPU_6502>(bus);
+    auto cpu = std::make_unique<CPU_6502>(bus.get());
 
     cpu.reset();
 
