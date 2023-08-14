@@ -1,6 +1,6 @@
-#include "Bus.h"
 #include <iomanip>
 #include <iostream>
+#include "Bus.h"
 
 Bus::Bus(Mapper *mapper) : mapper(mapper) {
   ram = new std::vector<uint8_t>();

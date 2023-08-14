@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
-#include "mapper/Mapper.h"
+#include "mappers/Mapper.h"
 
 /**
 NES Memory bus, using 2-bytes adresses.

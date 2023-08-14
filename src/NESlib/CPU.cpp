@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 #include <iomanip>
 #include <bitset>
@@ -107,7 +108,7 @@ void CPU_6502::step() {
                     break;
                 }
                 case STA:   // Store accumulator to memory
-                    ram->writeByte(getMem_c1(mode), A);
+                    this->writeMem_c1(mode, A);
                     break;
                 case LDA:   // Load accumulator with memory
                     A = this->getMem_c1(mode);
@@ -168,49 +169,62 @@ uint8_t CPU_6502::flagsToByte() const {
                            [](bool a, bool b) { return (a << 1) + b; });
 }
 
-uint8_t CPU_6502::getMem_c1(uint8_t mode) {
+uint16_t CPU_6502::getAddress_c1(uint8_t mode) {
     uint8_t result = 0x00;
     switch (mode) {
         case X_IND:
             // Indirect indexed : return the byte at address 0xYYXX where XX is the byte stored at (operand+X) and YY the byte at (operand+X+1)
-            result = ram->readByte(
+            result = 
                     ram->readByte(ram->readByte(PC) + X)
-                    + (ram->readByte(ram->readByte(PC) + X + 1) << 8));
+                    + (ram->readByte(ram->readByte(PC) + X + 1) << 8);
             break;
         case ZPG:
             // Zero-page : pointer to address in the range 0x00 - 0xFF
-            result = ram->readByte(ram->readByte(PC));
+            result = ram->readByte(PC);
             break;
         case IMM:
             // Immediate : use operand as direct value
-            result = ram->readByte(PC);
+            result = PC;
             break;
         case ABS:
             // Absolute : address specified by 2 operands
-            result = ram->readByte(ram->readByte(PC) + (ram->readByte(PC + 1) << 8));
+            result = ram->readByte(PC) + (ram->readByte(PC + 1) << 8);
             PC++; // operand is 2 bytes long
             break;
         case IND_Y:
             // Indirect indexed : return the byte at Y-index-address pointed by the zero-page bytes at operand, operand+1
-            result = ram->readByte(Y + ram->readByte(ram->readByte(PC)) + (ram->readByte(ram->readByte(PC) + 1) << 8));
+            result = Y + ram->readByte(ram->readByte(PC)) + (ram->readByte(ram->readByte(PC) + 1) << 8);
             break;
         case ZPG_X:
             // X-Indexed zero page : return the 0-page byte at (operand+X)
-            result = ram->readByte(X + ram->readByte(PC));
+            result = X + ram->readByte(PC);
             break;
         case ABS_Y:
             // Absolute indexed by Y : read 2-bytes address and index it by Y
-            result = ram->readByte(Y + ram->readByte(PC) + (ram->readByte(PC + 1) << 8));
+            result = Y + ram->readByte(PC) + (ram->readByte(PC + 1) << 8);
             break;
         case ABS_X:
             // Absolute indexed by X : read 2-bytes address and index it by X
-            result = ram->readByte(X + ram->readByte(PC) + (ram->readByte(PC + 1) << 8));
+            result = X + ram->readByte(PC) + (ram->readByte(PC + 1) << 8);
             break;
     }
 
     PC++;
     return result;
 }
+
+uint8_t CPU_6502::getMem_c1(uint8_t mode) {
+    return ram->readByte(getAddress_c1(mode));
+}
+
+void CPU_6502::writeMem_c1(uint8_t mode, uint8_t value) {
+    if (mode == IMM) { // Can't write to an immediate value because it is not an address
+        // Raise error
+        return;
+    }
+    ram->writeByte(getAddress_c1(mode), value);
+}
+
 
 void CPU_6502::setFlags(uint8_t mask, uint8_t value) {
     if (mask & Z_f) { // Zero flag : set if result is null

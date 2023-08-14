@@ -57,5 +57,7 @@ private:
    * for opcodes whose last 2 bits are 0b01, get the value depending on the addressing mode
    * and operand(s) if any.
    */
+  uint16_t getAddress_c1(uint8_t mode);
   uint8_t getMem_c1(uint8_t mode);
+  void writeMem_c1(uint8_t mode, uint8_t value);
 };

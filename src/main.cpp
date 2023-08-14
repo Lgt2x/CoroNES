@@ -4,7 +4,7 @@
 #include "CPU.h"
 #include "Bus.h"
 #include "Cartridge.h"
-#include "mapper/MapperNROM.h"
+#include "mappers/MapperNROM.h"
 
 int main(int argc, char* argv[]) {
     std::string filename = std::string(argv[1]);
