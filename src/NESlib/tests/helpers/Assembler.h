@@ -1,4 +1,6 @@
 /*
+Stripped-down 6502 assembler.
+
 Adapted from https://github.com/boeckmann/asm6502
 Original by Bernd Boeckmann, BSD-3 license
 */
@@ -23,14 +25,11 @@ Original by Bernd Boeckmann, BSD-3 license
 #define SET_DEFINED(v) ((v).defined = 1)
 #define SET_UNDEFINED(v) ((v).defined = 0)
 #define INFER_DEFINED(a, b) (a).defined = DEFINED(a) || DEFINED(b)
-
-
 #define IS_END(p) (((!(p)) || (p) == 0x0a) || ((p) == 0x0d))
 
 /* type specific preprocessor directives */
 #define TYPE(v) ((v).t)
 #define SET_TYPE(v, u) ((v).t = (u))
-
 #define NUM_TYPE(x) (((x) < 0x100) ? TYPE_BYTE : TYPE_WORD)
 
 
@@ -40,7 +39,7 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 
 typedef struct instruction_desc {
-  char mn[5];
+  char mnemonic[5];
   u8 op[16];
 } instruction_desc;
 
@@ -143,7 +142,6 @@ private:
 
   u16 address_counter =
       0; /* program counter of currently assembled instruction */
-  u16 output_counter = 0; /* counter of emitted output bytes */
 
   instruction_desc *get_instruction_descr(const char *p) {
     int l = 0, r = instruction_tbl_size, x;
@@ -151,7 +149,7 @@ private:
 
     while (r >= l) {
       x = l + ((r - l) >> 2);
-      cmp = strcmp(p, instruction_tbl[x].mn);
+      cmp = strcmp(p, instruction_tbl[x].mnemonic);
       if (cmp == 0)
         return &instruction_tbl[x];
       else if (cmp > 0)
@@ -218,11 +216,7 @@ private:
   }
 
   void emit_byte(u8 b) {
-    if (pass_num == 2) {
-      code.push_back(b);
-    }
-
-    output_counter += 1;
+    code.push_back(b);
   }
 
   enum { TYPE_BYTE = 1, TYPE_WORD = 2 };
@@ -230,26 +224,14 @@ private:
   void emit(const char *p, u16 len) {
     u16 i = 0;
 
-    if (pass_num == 2) {
-      if (output_counter - 1 < code_size - len) {
-        for (i = 0; i < len; i++) {
-          code.push_back(p[i]);
-        }
-      } else
-        error(ERR_PHASE_SIZE);
+    for (i = 0; i < len; i++) {
+      code.push_back(p[i]);
     }
-    output_counter += len;
   }
 
   void emit_word(u16 w) {
-    if (pass_num == 2) {
-      if (output_counter < code_size - 1) {
-        code.push_back(w & 0xff);
-        code.push_back(w >> 8);
-      } else
-        error(ERR_PHASE_SIZE);
-    }
-    output_counter += 2;
+    code.push_back(w & 0xff);
+    code.push_back(w >> 8);
   }
 
   void skip_white(char **pp) {
@@ -293,10 +275,10 @@ private:
   }
 
   /* emit instruction with two byte arguments */
-  void emit_instr_2b(instruction_desc *instr, int am, u8 o, u8 p) {
-        code[output_counter] = instr->op[am];
-        code[output_counter + 1] = o;
-        code[output_counter + 2] = p;
+  void emit_instr_2b(instruction_desc *instr, int am, u8 byte1, u8 byte2) {
+        code.push_back(instr->op[am]);
+        code.push_back(byte1);
+        code.push_back(byte2);
  }
 
 /* Parse a number, either in hex, binary or decimal */

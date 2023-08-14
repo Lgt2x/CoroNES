@@ -26,5 +26,13 @@ TEST_CASE("CPU supports all Adressing modes") {
     fixture.cpu->step();
     CHECK(fixture.cpu->dumpRegisters()[0] == 0x30);
   }
+
+  SUBCASE("Absolute addressing") {
+    auto fixture = TestFixture::setupTest({"LDA $0230"}, 0x800);
+    fixture.bus->writeByte(0x0230, 0x56);
+
+    fixture.cpu->step();
+    CHECK(fixture.cpu->dumpRegisters()[0] == 0x56);
+  }  
 }
 

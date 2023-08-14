@@ -170,7 +170,7 @@ uint8_t CPU_6502::flagsToByte() const {
 }
 
 uint16_t CPU_6502::getAddress_c1(uint8_t mode) {
-    uint8_t result = 0x00;
+    uint16_t result = 0x00;
     switch (mode) {
         case X_IND:
             // Indirect indexed : return the byte at address 0xYYXX where XX is the byte stored at (operand+X) and YY the byte at (operand+X+1)
