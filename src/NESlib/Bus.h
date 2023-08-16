@@ -31,7 +31,7 @@ public:
   Bus(Mapper* mapper); // optional mapper ?
 
   Bus(Bus& bus) = delete;
-  ~Bus();
+  Bus & operator=(const Bus&) = delete;
 
   uint8_t readByte(uint16_t address);
   void writeByte(uint16_t address, uint8_t value);
@@ -39,6 +39,6 @@ public:
   template<typename T>static std::string print_hex(T a, int size);
   void printState(uint16_t start, uint16_t end);
 private:
-  std::vector<uint8_t>* ram;
+  std::vector<uint8_t> ram;
   Mapper *mapper;
 };

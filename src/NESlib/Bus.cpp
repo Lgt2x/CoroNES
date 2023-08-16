@@ -3,20 +3,13 @@
 #include "Bus.h"
 
 Bus::Bus(Mapper *mapper) : mapper(mapper) {
-  ram = new std::vector<uint8_t>();
-  ram->resize(0xFFFF + 1, 0);
-  std::cout << "Bus init !" << std::endl;
-}
-
-Bus::~Bus() {
-  delete ram;
-  std::cout << "Bus destroyed" << std::endl;
+  ram.resize(0xFFFF + 1, 0);
 }
 
 void Bus::writeByte(uint16_t address, uint8_t value) {
   if (address <= 0x1FFF) {
     // Internal RAM & mirrors
-    ram->at(address % 0x800) = value;
+    ram.at(address % 0x800) = value;
   } else {
     mapper->writePRG(address, value);
   }
@@ -25,7 +18,7 @@ void Bus::writeByte(uint16_t address, uint8_t value) {
 uint8_t Bus::readByte(uint16_t address) {
   if (address <= 0x1FFF) {
     // Internal RAM & mirrors
-    return (*ram)[address % 0x800];
+    return ram[address % 0x800];
   } else if (address <= 0x3FFF) {
     std::cout << "PPU Register accessed" << std::endl;
     return 0x0;
@@ -33,7 +26,7 @@ uint8_t Bus::readByte(uint16_t address) {
     std::cout << "APU || IO register accessed" << std::endl;
     return 0x0;
   } else {
-    // Cartridge space
+    // Cartridge space, defer to the mapper
     return mapper->readPRG(address);
   }
 }

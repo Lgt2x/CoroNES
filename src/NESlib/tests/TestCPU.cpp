@@ -8,7 +8,8 @@
 #include "helpers/TestFixture.h"
 
 TEST_CASE("CPU reset sets the program counter to the reset vector") {
-  auto bus = std::make_unique<Bus>(new DummyMapper());
+  auto mapper = std::make_unique<DummyMapper>();
+  auto bus = std::make_unique<Bus>(mapper.get());
 
   // Set reset vector
   uint16_t startAddress = 0x800;

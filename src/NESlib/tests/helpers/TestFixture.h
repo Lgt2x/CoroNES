@@ -21,7 +21,8 @@ struct NES_Test {
  * located at address 0x800.
  */
 inline NES_Test setupTest(std::vector<std::string> program, uint16_t startAddress) {
-  auto bus = std::make_unique<Bus>(new DummyMapper());
+  auto mapper = std::make_unique<DummyMapper>();
+  auto bus = std::make_unique<Bus>(mapper.get());
 
   // Set reset vector
   bus->writeByte(0xFFFC, startAddress & 0xFF);
