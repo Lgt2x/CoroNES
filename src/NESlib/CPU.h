@@ -12,6 +12,9 @@ public:
   // Execute one instruction, pointed by the Program Counter
   void step();
 
+  // Execute multiple instructions
+  void step(int nbSteps);
+
   // Hard reset
   void reset();
 

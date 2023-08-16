@@ -16,10 +16,10 @@ public:
     }
 
     uint8_t readPRG(uint16_t address) { 
-      return (*memory)[address+0xBFFF];
+      return memory->at(address-0xBFFF);
      };
     void writePRG(uint16_t address, uint8_t value) {
-      (*memory)[address-0xBFFF] = value;
+      memory->at(address-0xBFFF) = value;
     };
 private:
   std::vector<uint8_t>* memory;
