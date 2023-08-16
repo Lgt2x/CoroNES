@@ -20,8 +20,7 @@ TEST_CASE("CPU reset sets the program counter to the reset vector") {
   cpu->reset();
 
   // PC should be set to reset vector
-  CHECK(cpu->dumpRegisters()[5] == (0x800 & 0xFF));
-  CHECK(cpu->dumpRegisters()[6] == (0x800 >> 8));
+  CHECK(cpu->dumpRegisters().PC == 0x800);
 }
 
 TEST_CASE("CPU supports all Adressing modes") {
@@ -35,9 +34,9 @@ TEST_CASE("CPU supports all Adressing modes") {
   //   fixture.bus->writeByte(0x36, 0x02);
   //   fixture.bus->writeByte(0x0267, 0x56);
 
-  //   CHECK(fixture.cpu->dumpRegisters()[0] == 0x00);
+  //   CHECK(fixture.cpu->dumpRegisters().A == 0x00);
   //   fixture.cpu->step();
-  //   CHECK(fixture.cpu->dumpRegisters()[0] == 0x56);
+  //   CHECK(fixture.cpu->dumpRegisters().A == 0x56);
   // }
 
   SUBCASE("Zero-page addressing") {
@@ -45,14 +44,14 @@ TEST_CASE("CPU supports all Adressing modes") {
     fixture.bus->writeByte(0x22, 0x30);
 
     fixture.cpu->step();
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0x30);
+    CHECK(fixture.cpu->dumpRegisters().A == 0x30);
   }
 
   SUBCASE("Immediate addressing") {
     auto fixture = TestFixture::setupTest({"LDA #$0A"}, 0x800);
 
     fixture.cpu->step();
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0x0A);
+    CHECK(fixture.cpu->dumpRegisters().A == 0x0A);
   }
 
   SUBCASE("Absolute addressing") {
@@ -60,7 +59,7 @@ TEST_CASE("CPU supports all Adressing modes") {
     fixture.bus->writeByte(0x1234, 0x30);
 
     fixture.cpu->step();
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0x30);
+    CHECK(fixture.cpu->dumpRegisters().A == 0x30);
   }
 
   // SUBCASE("Y Indirect post-indexed") {
@@ -70,7 +69,7 @@ TEST_CASE("CPU supports all Adressing modes") {
 
   //   // $265 indexed by Y=$11 gives address $276, loading this byte in A
   //   fixture.cpu->step();
-  //   CHECK(fixture.cpu->dumpRegisters()[0] == 0x30);
+  //   CHECK(fixture.cpu->dumpRegisters().A == 0x30);
   // }
 
   // SUBCASE("X-indexed Zero-page addressing") {
@@ -78,7 +77,7 @@ TEST_CASE("CPU supports all Adressing modes") {
   //   fixture.bus->writeByte(0x33, 0x30);
 
   //   fixture.cpu->step();
-  //   CHECK(fixture.cpu->dumpRegisters()[0] == 0x30);
+  //   CHECK(fixture.cpu->dumpRegisters().A == 0x30);
   // }
 
   // SUBCASE("Absolute indexed by X addressing") {
@@ -86,7 +85,7 @@ TEST_CASE("CPU supports all Adressing modes") {
   //   0x800); fixture.bus->writeByte(0x0241, 0x56);
 
   //   fixture.cpu->step();
-  //   CHECK(fixture.cpu->dumpRegisters()[0] == 0x56);
+  //   CHECK(fixture.cpu->dumpRegisters().A == 0x56);
   // }
 
   // SUBCASE("Absolute indexed by Y addressing") {
@@ -94,9 +93,11 @@ TEST_CASE("CPU supports all Adressing modes") {
   //   0x800); fixture.bus->writeByte(0x0241, 0x56);
 
   //   fixture.cpu->step();
-  //   CHECK(fixture.cpu->dumpRegisters()[0] == 0x56);
+  //   CHECK(fixture.cpu->dumpRegisters().A == 0x56);
   // }
 }
+
+enum flags { N_f, V_f, B_f, D_f, I_f, Z_f, C_f };
 
 TEST_CASE("CPU supports all 6502 opcodes") {
   SUBCASE("ORA") {
@@ -108,7 +109,7 @@ TEST_CASE("CPU supports all 6502 opcodes") {
     //  = 11101110
 
     fixture.cpu->step(4);
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0b11101110);
+    CHECK(fixture.cpu->dumpRegisters().A == 0b11101110);
   }
 
   SUBCASE("AND") {
@@ -120,7 +121,7 @@ TEST_CASE("CPU supports all 6502 opcodes") {
     //   = 10000100
 
     fixture.cpu->step(4);
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0b10000100);
+    CHECK(fixture.cpu->dumpRegisters().A == 0b10000100);
   }
 
   SUBCASE("EOR") {
@@ -132,7 +133,7 @@ TEST_CASE("CPU supports all 6502 opcodes") {
     //   = 01101010
 
     fixture.cpu->step(4);
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0b01101010);
+    CHECK(fixture.cpu->dumpRegisters().A == 0b01101010);
   }
 
   SUBCASE("ADC") {
@@ -144,7 +145,7 @@ TEST_CASE("CPU supports all 6502 opcodes") {
     //   = 101110010
 
     fixture.cpu->step(4);
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0b01110010);
+    CHECK(fixture.cpu->dumpRegisters().A == 0b01110010);
   }
 
   SUBCASE("STA") {
@@ -159,19 +160,43 @@ TEST_CASE("CPU supports all 6502 opcodes") {
         TestFixture::setupTest({"LDA #$0A", "LDA #$FE", "LDA #$00"}, 0x800);
 
     fixture.cpu->step();
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0x0A);
+    CHECK(fixture.cpu->dumpRegisters().A == 0x0A);
 
     // Check flags
-    // fixture.cpu->step();
-    // CHECK(fixture.cpu->dumpRegisters()[0] == 0xFE);
-    // CHECK((fixture.cpu->dumpRegisters()[4]&0b1000000) == 1);
+    fixture.cpu->step();
+    CHECK(fixture.cpu->dumpRegisters().A == 0xFE);
+    CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
 
-    // fixture.cpu->step();
-    // CHECK(fixture.cpu->dumpRegisters()[0] == 0x00);
-    // CHECK((fixture.cpu->dumpRegisters()[4]&0b00000010) == 0b10);
+    fixture.cpu->step();
+    CHECK(fixture.cpu->dumpRegisters().A == 0x00);
+    CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
   }
 
-  SUBCASE("CMP") {}
+  SUBCASE("CMP") {
+    SUBCASE("CMP in equality case ") {
+      auto fixture =
+          TestFixture::setupTest({"LDA #$3E", "STA $20", "CMP $20"}, 0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
+    }
+
+    SUBCASE("CMP in superiority case ") {
+      auto fixture =
+          TestFixture::setupTest({"LDA #$02", "STA $20", "LDA #$0E","CMP $20"}, 0x800);
+      fixture.cpu->step(4);
+      CHECK(!fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
+    }
+
+    SUBCASE("CMP in inferiority case ") {
+      auto fixture =
+          TestFixture::setupTest({"LDA #$5E", "STA $20", "LDA #$33","CMP $20"}, 0x800);
+      fixture.cpu->step(4);
+      CHECK(!fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK(!fixture.cpu->dumpRegisters().flags[C_f]);
+    }
+  }
 
   SUBCASE("SBC") {
     auto fixture = TestFixture::setupTest(
@@ -179,9 +204,9 @@ TEST_CASE("CPU supports all 6502 opcodes") {
 
     //     11001100
     // -   10100110
-    //   = 00100110 
+    //   = 00100110
 
     fixture.cpu->step(4);
-    CHECK(fixture.cpu->dumpRegisters()[0] == 0b100110);
+    CHECK(fixture.cpu->dumpRegisters().A == 0b100110);
   }
 }
