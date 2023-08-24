@@ -455,8 +455,299 @@ TEST_CASE("CPU supports all 6502 opcodes") {
       // CHECK(fixture.bus->readByte(0x20) == 0b10110011);
     }
   }
-  SUBCASE("STX") {}
-  SUBCASE("LDX") {}
-  SUBCASE("DEC") {}
-  SUBCASE("INC") {}
+  SUBCASE("STX") {
+    SUBCASE("Store X zero-page") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$CA",
+              "STX $12",
+          },
+          0x800);
+      fixture.cpu->step(2);
+      CHECK(fixture.bus->readByte(0x12) == 0xCA);
+    }
+    SUBCASE("Store X absolute") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$CA",
+              "STX $1445",
+          },
+          0x800);
+      fixture.cpu->step(2);
+      CHECK(fixture.bus->readByte(0x1445) == 0xCA);
+    }
+    // SUBCASE("Load X zero-page Y indexed") {
+    //   auto fixture = TestFixture::setupTest(
+    //       {
+    //           "LDA #$CA",
+    //           "LDY #$02",
+    //           "STA 0x14",
+    //           "LDX 0x12,Y",
+    //       },
+    //       0x800);
+    //   fixture.cpu->step(4);
+    //   CHECK(fixture.cpu->dumpRegisters().X == 0xCA);
+    // }
+  }
+  SUBCASE("TXA") {
+    auto fixture = TestFixture::setupTest(
+        {
+            "LDX #$CA",
+            "TXA",
+        },
+        0x800);
+    fixture.cpu->step(2);
+    CHECK(fixture.cpu->dumpRegisters().A == 0xCA);
+  }
+  SUBCASE("TXS") {
+    auto fixture = TestFixture::setupTest(
+        {
+            "LDX #$CA",
+            "TXS",
+        },
+        0x800);
+    fixture.cpu->step(2);
+    CHECK(fixture.cpu->dumpRegisters().SP == 0xCA);
+  }
+  SUBCASE("LDX") {
+    SUBCASE("Load X immediate") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$45",
+          },
+          0x800);
+      fixture.cpu->step(1);
+      CHECK(fixture.cpu->dumpRegisters().X == 0x45);
+    }
+    SUBCASE("Load X absolute") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$CA",
+              "STA 0x1445",
+              "LDX 0x1445",
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.cpu->dumpRegisters().X == 0xCA);
+    }
+    // SUBCASE("Load X absolute, Y-indexed") {
+    //   auto fixture = TestFixture::setupTest(
+    //       {
+    //           "LDA #$CA",
+    //           "LDY #$05",
+    //           "STA 0x1450",
+    //           "LDX 0x1445,Y",
+    //       },
+    //       0x800);
+    //   fixture.cpu->step(3);
+    //   CHECK(fixture.cpu->dumpRegisters().X == 0xCA);
+    // }
+    SUBCASE("Load X zero-page") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$CA",
+              "STA 0x12",
+              "LDX 0x12",
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.cpu->dumpRegisters().X == 0xCA);
+    }
+    // SUBCASE("Load X zero-page Y indexed") {
+    //   auto fixture = TestFixture::setupTest(
+    //       {
+    //           "LDA #$CA",
+    //           "LDY #$02",
+    //           "STA 0x14",
+    //           "LDX 0x12,Y",
+    //       },
+    //       0x800);
+    //   fixture.cpu->step(4);
+    //   CHECK(fixture.cpu->dumpRegisters().X == 0xCA);
+    // }
+    SUBCASE("Load X, set flags") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$F0",
+              "LDX #$00",
+          },
+          0x800);
+      fixture.cpu->step();
+      CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+      fixture.cpu->step();
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+  }
+  SUBCASE("TAX") {
+    auto fixture = TestFixture::setupTest(
+        {
+            "LDA #$CA",
+            "TAX",
+        },
+        0x800);
+    fixture.cpu->step(2);
+    CHECK(fixture.cpu->dumpRegisters().X == 0xCA);
+  }
+  SUBCASE("TSX") {
+    auto fixture = TestFixture::setupTest(
+        {
+            "TSX",
+        },
+        0x800);
+    fixture.cpu->step();
+    CHECK(fixture.cpu->dumpRegisters().X == 0xFD);
+  }
+
+  SUBCASE("DEC") {
+    SUBCASE("Decrement zero page") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "STA $10",
+              "DEC $10",
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x10) == 0x1f);
+    }
+    SUBCASE("Decrement X register") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$20",
+              "DEX",
+          },
+          0x800);
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().X == 0x1f);
+    }
+    SUBCASE("Decrement absolute address") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "STA $1045",
+              "DEC $1045",
+
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x1045) == 0x1f);
+    }
+    SUBCASE("Decrement zero page X indexed") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "LDX #$03",
+              "STA $11",
+              "DEC $0E,X",
+
+          },
+          0x800);
+      fixture.cpu->step(4);
+      CHECK(fixture.bus->readByte(0x11) == 0x1f);
+    }
+    SUBCASE("Decrement absolute X indexed") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$22",
+              "LDX #$03",
+              "STA $1134",
+              "DEC $1131,X",
+
+          },
+          0x800);
+      fixture.cpu->step(4);
+      CHECK(fixture.bus->readByte(0x1134) == 0x21);
+    }
+    SUBCASE("Decrement, set flags") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$82",
+              "DEX",
+              "LDX #$01",
+              "DEX",
+
+          },
+          0x800);
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+    } // TODO : test overflow
+  }
+  SUBCASE("INC") {
+    SUBCASE("Increment zero page") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "STA $10",
+              "INC $10",
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x10) == 0x21);
+    }
+    SUBCASE("Increment absolute address") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "STA $1045",
+              "INC $1045",
+
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x1045) == 0x21);
+    }
+    SUBCASE("Increment zero page X indexed") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "LDX #$03",
+              "STA $11",
+              "INC $0E,X",
+
+          },
+          0x800);
+      fixture.cpu->step(4);
+      CHECK(fixture.bus->readByte(0x11) == 0x21);
+    }
+    SUBCASE("Increment absolute X indexed") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$20",
+              "LDX #$03",
+              "STA $1134",
+              "INC $1131,X",
+
+          },
+          0x800);
+      fixture.cpu->step(4);
+      CHECK(fixture.bus->readByte(0x1134) == 0x21);
+    }
+    SUBCASE("Increment, set flags") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDX #$7F",
+              "STX $20",
+              "INC $20",
+              "LDX #$FF",
+              "STX $20",
+              "INC $20",
+
+          },
+          0x800);
+      fixture.cpu->step(3);
+      CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+
+      fixture.cpu->step(3);
+      CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+    } // TODO : test overflow
+  }
 }

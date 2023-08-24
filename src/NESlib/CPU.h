@@ -40,7 +40,8 @@ private:
    * addressing mode and operand(s) if any.
    */
   uint16_t getAddress_c1(uint8_t mode);
-  uint8_t getMem_c1(uint8_t mode);
+  uint8_t getMemAndIncrementPC(uint8_t mode);
+  uint8_t getMem(uint8_t mode);
   void writeMem_c1(uint8_t mode, uint8_t value);
 
 public:
