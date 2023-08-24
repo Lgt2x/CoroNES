@@ -46,18 +46,12 @@ private:
 public:
   explicit CPU_6502(Bus *ram);
 
-  // Execute one instruction, pointed by the Program Counter
   void step();
-
-  // Execute multiple instructions
   void step(int nbSteps);
 
-  // Hard reset
   void reset();
 
-  // Debug functions
   void print_state() const;
-
   Registers dumpRegisters() { return reg; };
 
   template <typename T> static std::string print_hex(T a);

@@ -1,5 +1,0 @@
-LDA #$02
-TAX
-STA $12,X
-LDA #$12
-LDA $12,X

@@ -103,7 +103,13 @@ enum flags { N_f, V_f, B_f, D_f, I_f, Z_f, C_f };
 TEST_CASE("CPU supports all 6502 opcodes") {
   SUBCASE("ORA") {
     auto fixture = TestFixture::setupTest(
-        {"LDA #%10100110", "STA $20", "LDA#%11001100", "ORA $20"}, 0x800);
+        {
+            "LDA #%10100110",
+            "STA $20",
+            "LDA#%11001100",
+            "ORA $20",
+        },
+        0x800);
 
     //    10100110
     // OR 11001100
@@ -115,7 +121,13 @@ TEST_CASE("CPU supports all 6502 opcodes") {
 
   SUBCASE("AND") {
     auto fixture = TestFixture::setupTest(
-        {"LDA #%10100110", "STA $20", "LDA#%11001100", "AND $20"}, 0x800);
+        {
+            "LDA #%10100110",
+            "STA $20",
+            "LDA#%11001100",
+            "AND $20",
+        },
+        0x800);
 
     //     10100110
     // AND 11001100
@@ -127,7 +139,13 @@ TEST_CASE("CPU supports all 6502 opcodes") {
 
   SUBCASE("EOR") {
     auto fixture = TestFixture::setupTest(
-        {"LDA #%10100110", "STA $20", "LDA#%11001100", "EOR $20"}, 0x800);
+        {
+            "LDA #%10100110",
+            "STA $20",
+            "LDA#%11001100",
+            "EOR $20",
+        },
+        0x800);
 
     //     10100110
     // EOR 11001100
@@ -139,7 +157,13 @@ TEST_CASE("CPU supports all 6502 opcodes") {
 
   SUBCASE("ADC") {
     auto fixture = TestFixture::setupTest(
-        {"LDA #%10100110", "STA $20", "LDA#%11001100", "ADC $20"}, 0x800);
+        {
+            "LDA #%10100110",
+            "STA $20",
+            "LDA#%11001100",
+            "ADC $20",
+        },
+        0x800);
 
     //      10100110
     // +    11001100
@@ -150,15 +174,25 @@ TEST_CASE("CPU supports all 6502 opcodes") {
   }
 
   SUBCASE("STA") {
-    auto fixture = TestFixture::setupTest({"LDA #$0A", "STA $20"}, 0x800);
+    auto fixture = TestFixture::setupTest(
+        {
+            "LDA #$0A",
+            "STA $20",
+        },
+        0x800);
     fixture.cpu->step();
     fixture.cpu->step();
     CHECK(fixture.bus->readByte(0x20) == 0x0A);
   }
 
   SUBCASE("LDA") {
-    auto fixture =
-        TestFixture::setupTest({"LDA #$0A", "LDA #$FE", "LDA #$00"}, 0x800);
+    auto fixture = TestFixture::setupTest(
+        {
+            "LDA #$0A",
+            "LDA #$FE",
+            "LDA #$00",
+        },
+        0x800);
 
     fixture.cpu->step();
     CHECK(fixture.cpu->dumpRegisters().A == 0x0A);
@@ -175,33 +209,56 @@ TEST_CASE("CPU supports all 6502 opcodes") {
 
   SUBCASE("CMP") {
     SUBCASE("CMP in equality case ") {
-      auto fixture =
-          TestFixture::setupTest({"LDA #$3E", "STA $20", "CMP $20"}, 0x800);
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$3E",
+              "STA $20",
+              "CMP $20",
+          },
+          0x800);
       fixture.cpu->step(3);
       CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
       CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
     }
 
     SUBCASE("CMP in superiority case ") {
-      auto fixture =
-          TestFixture::setupTest({"LDA #$02", "STA $20", "LDA #$0E","CMP $20"}, 0x800);
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$02",
+              "STA $20",
+              "LDA #$0E",
+              "CMP $20",
+          },
+          0x800);
       fixture.cpu->step(4);
-      CHECK(!fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
       CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
     }
 
     SUBCASE("CMP in inferiority case ") {
-      auto fixture =
-          TestFixture::setupTest({"LDA #$5E", "STA $20", "LDA #$33","CMP $20"}, 0x800);
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #$5E",
+              "STA $20",
+              "LDA #$33",
+              "CMP $20",
+          },
+          0x800);
       fixture.cpu->step(4);
-      CHECK(!fixture.cpu->dumpRegisters().flags[Z_f]);
-      CHECK(!fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
     }
   }
 
   SUBCASE("SBC") {
     auto fixture = TestFixture::setupTest(
-        {"LDA #%10100110", "STA $20", "LDA#%11001100", "SBC $20"}, 0x800);
+        {
+            "LDA #%10100110",
+            "STA $20",
+            "LDA#%11001100",
+            "SBC $20",
+        },
+        0x800);
 
     //     11001100
     // -   10100110
@@ -210,4 +267,196 @@ TEST_CASE("CPU supports all 6502 opcodes") {
     fixture.cpu->step(4);
     CHECK(fixture.cpu->dumpRegisters().A == 0b100110);
   }
+
+  SUBCASE("ASL") {
+    SUBCASE("Shift left, set carry") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%10100110",
+              "ASL",
+          },
+          0x800);
+
+      //     10100110 Shift left once
+      // 1 | 01001100
+
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().A == 0b01001100);
+      CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+    SUBCASE("Shift left memory, set negative flag") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%01100110",
+              "STA $20",
+              "ASL $20",
+          },
+          0x800);
+
+      //     01100110 Shift left once
+      // 0 | 11001100
+
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x20) == 0b11001100);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+  }
+
+  SUBCASE("ROL") {
+    SUBCASE("Rotate Accumulator left, set carry") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%10100110",
+              "ROL",
+          },
+          0x800);
+
+      //     10100110 Shifted left once
+      // 1 | 01001100
+
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().A == 0b01001100);
+      CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+    SUBCASE("Rotate memory left, set negative flag") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%01100110",
+              "STA $20",
+              "ROL $20",
+          },
+          0x800);
+
+      //     1100110 Shifted left once
+      // 0 | 11001100
+
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x20) == 0b11001100);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+    SUBCASE("Rotate accumulator left, shift carry in") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "SEC",
+              "LDA #%01100110",
+              "STA $20",
+              "ROL $20",
+          },
+          0x800);
+      // TODO : SEC
+
+      //     01100110 shift left, insert carry = 1
+      // 0 | 11001101
+
+      // fixture.cpu->step(4);
+      // CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
+      // CHECK(fixture.bus->readByte(0x20) == 0b11001101);
+    }
+  }
+  SUBCASE("LSR") {
+    SUBCASE("Shift accumulator right, set carry") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%10100101",
+              "LSR",
+          },
+          0x800);
+
+      //    10100101     Shift right once
+      // >> 01010010 | 1
+
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().A == 0b01010010);
+      CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+    SUBCASE("Shift memory right") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%01100110",
+              "STA $20",
+              "LSR $20",
+          },
+          0x800);
+
+      //    01100110      Shift right once
+      // >> 00110011 | 0
+
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x20) == 0b00110011);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+  }
+
+  SUBCASE("ROR") {
+    SUBCASE("Rotate accumulator right, set carry") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%10100101",
+              "ROR",
+          },
+          0x800);
+
+      //    10100101     Shift right once
+      // >> 01010010 | 1
+
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().A == 0b01010010);
+      CHECK(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+    SUBCASE("Shift memory right") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "LDA #%01100110",
+              "STA $20",
+              "ROR $20",
+          },
+          0x800);
+
+      //    01100110      Shift right once
+      // >> 00110011 | 0
+
+      fixture.cpu->step(3);
+      CHECK(fixture.bus->readByte(0x20) == 0b00110011);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+    }
+    SUBCASE("Rotate accumulator right, shift carry in") {
+      auto fixture = TestFixture::setupTest(
+          {
+              "SEC",
+              "LDA #%01100110",
+              "STA $20",
+              "ROR $20",
+          },
+          0x800);
+      // TODO : SEC
+
+      // 01100110     shift right, insert carry = 1
+      // 10110011 | 0
+
+      // fixture.cpu->step(4);
+      // CHECK_FALSE(fixture.cpu->dumpRegisters().flags[C_f]);
+      // CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+      // CHECK(fixture.bus->readByte(0x20) == 0b10110011);
+    }
+  }
+  SUBCASE("STX") {}
+  SUBCASE("LDX") {}
+  SUBCASE("DEC") {}
+  SUBCASE("INC") {}
 }

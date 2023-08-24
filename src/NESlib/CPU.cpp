@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <iostream>
 #include <numeric>
+#include <sys/types.h>
 
 #include "Bus.h"
 #include "CPU.h"
@@ -28,7 +29,7 @@ void CPU_6502::reset() {
 }
 
 void CPU_6502::step() {
-  CPU_6502::print_state();
+  // CPU_6502::print_state();
 
   // Read the opcode at the current program counter address and increment it
   uint8_t opcode = ram->readByte(reg.PC);
@@ -101,10 +102,10 @@ void CPU_6502::step() {
     }
     case SBC: { // Subtract from accumulator with borrow
       uint8_t operand = getMem_c1(mode);
-      uint16_t res = reg.A - operand;      // - reg.flags[C_f];
+      uint16_t res = reg.A - operand; // - reg.flags[C_f];
       reg.flags[C_f] = (res >> 8) > 0;
       reg.flags[V_f] = (reg.A & 0x80 && operand & 0x80 && !(res & 0x80)) ||
-                         (!(reg.A & 0x80) && operand & 0x80 && res & 0x80);
+                       (!(reg.A & 0x80) && operand & 0x80 && res & 0x80);
       reg.A = res & 0xFF;
       reg.flags[N_f] = reg.A & 0x80;
       reg.flags[Z_f] = reg.A == 0;
@@ -113,8 +114,86 @@ void CPU_6502::step() {
     }
     break;
   case 0b10:
-    std::cout << "Not supported yet." << std::endl;
-    break;
+    switch (instruction) {
+    case ASL: {
+      uint16_t value{};
+      if (mode == IMM) {
+        value = (reg.A << 1);
+        reg.A = value & 0xFF;
+      } else {
+        uint16_t PC_save = reg.PC;
+        value = (getMem_c1(mode) << 1);
+        reg.PC = PC_save;
+        writeMem_c1(mode, value & 0xFF);
+      }
+      reg.flags[N_f] = value & 0x80;
+      reg.flags[Z_f] = value == 0;
+      reg.flags[C_f] = value > 0xFF;
+      break;
+    }
+    case ROL: {
+      uint16_t value{};
+      if (mode == IMM) {
+        value = (reg.A << 1) + reg.flags[C_f];
+        reg.A = value & 0xFF;
+      } else {
+        uint16_t PC_save = reg.PC;
+        value = (getMem_c1(mode) << 1) + reg.flags[C_f];
+        reg.PC = PC_save;
+        writeMem_c1(mode, value & 0xFF);
+      }
+      reg.flags[N_f] = value & 0x80;
+      reg.flags[Z_f] = value == 0x00;
+      reg.flags[C_f] = value > 0xFF;
+      break;
+    }
+    case LSR: {
+      uint8_t value{};
+      uint8_t previous{};
+      if (mode == IMM) {
+        previous = reg.A;
+        value = (reg.A >> 1);
+        reg.A = value;
+      } else {
+        uint16_t PC_save = reg.PC;
+        previous = getMem_c1(mode);
+        value = (previous >> 1);
+        reg.PC = PC_save;
+        writeMem_c1(mode, value);
+      }
+      reg.flags[N_f] = value & 0x80;
+      reg.flags[Z_f] = value == 0x00;
+      reg.flags[C_f] = previous & 0x01;
+      break;
+    }
+    case ROR: {
+      uint8_t value{};
+      uint8_t previous{};
+      if (mode == IMM) {
+        previous = reg.A;
+        value = (reg.A >> 1) + (reg.flags[C_f] << 7);
+        reg.A = value;
+      } else {
+        uint16_t PC_save = reg.PC;
+        previous = getMem_c1(mode);
+        value = (previous >> 1);
+        reg.PC = PC_save;
+        writeMem_c1(mode, value);
+      }
+      reg.flags[N_f] = value & 0x80;
+      reg.flags[Z_f] = value == 0x00;
+      reg.flags[C_f] = previous & 0x01;
+      break;
+    }
+    case STX:
+      break;
+    case LDX:
+      break;
+    case DEC:
+      break;
+    case INC:
+      break;
+    }
   }
 }
 
