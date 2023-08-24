@@ -75,22 +75,22 @@ void CPU_6502::step() {
   case 0b01:
     switch (instruction) {
     case ORA: // OR memory with accumulator
-      reg.A |= this->getMemAndIncrementPC(mode);
+      reg.A |= this->readByteAndIncrementPC(mode);
       reg.flags[N_f] = reg.A & 0x80;
       reg.flags[Z_f] = reg.A == 0;
       break;
     case AND: // AND memory with accumulator
-      reg.A &= this->getMemAndIncrementPC(mode);
+      reg.A &= this->readByteAndIncrementPC(mode);
       reg.flags[N_f] = reg.A & 0x80;
       reg.flags[Z_f] = reg.A == 0;
       break;
     case EOR: // XOR memory with accumulator
-      reg.A ^= this->getMemAndIncrementPC(mode);
+      reg.A ^= this->readByteAndIncrementPC(mode);
       reg.flags[N_f] = reg.A & 0x80;
       reg.flags[Z_f] = reg.A == 0;
       break;
     case ADC: { // Add memory to accumulator with carry
-      uint8_t operand = getMemAndIncrementPC(mode);
+      uint8_t operand = readByteAndIncrementPC(mode);
       uint16_t res = reg.A + operand;
       reg.A = res & 0xFF;
       reg.flags[C_f] = (res >> 8) > 0; // Set the carry
@@ -106,22 +106,22 @@ void CPU_6502::step() {
       break;
     }
     case STA: // Store accumulator to memory
-      this->writeMem_c1(mode, reg.A);
+      this->writeByte(mode, reg.A);
       break;
     case LDA: // Load accumulator with memory
-      reg.A = this->getMemAndIncrementPC(mode);
+      reg.A = this->readByteAndIncrementPC(mode);
       reg.flags[N_f] = reg.A & 0x80;
       reg.flags[Z_f] = reg.A == 0;
       break;
     case CMP: { // Compare memory with accumulator
-      uint8_t operand = getMemAndIncrementPC(mode);
+      uint8_t operand = readByteAndIncrementPC(mode);
       reg.flags[C_f] = reg.A >= operand;
       reg.flags[N_f] = reg.A & 0x80; // Not sure about that
       reg.flags[Z_f] = reg.A == operand;
       break;
     }
     case SBC: { // Subtract from accumulator with borrow
-      uint8_t operand = getMemAndIncrementPC(mode);
+      uint8_t operand = readByteAndIncrementPC(mode);
       uint16_t res = reg.A - operand; // - reg.flags[C_f];
       reg.flags[C_f] = (res >> 8) > 0;
       reg.flags[V_f] = (reg.A & 0x80 && operand & 0x80 && !(res & 0x80)) ||
@@ -142,9 +142,9 @@ void CPU_6502::step() {
         reg.A = value & 0xFF;
       } else {
         uint16_t PC_save = reg.PC;
-        value = (getMemAndIncrementPC(mode) << 1);
+        value = (readByteAndIncrementPC(mode) << 1);
         reg.PC = PC_save;
-        writeMem_c1(mode, value & 0xFF);
+        writeByte(mode, value & 0xFF);
       }
       reg.flags[N_f] = value & 0x80;
       reg.flags[Z_f] = value == 0;
@@ -158,9 +158,9 @@ void CPU_6502::step() {
         reg.A = value & 0xFF;
       } else {
         uint16_t PC_save = reg.PC;
-        value = (getMemAndIncrementPC(mode) << 1) + reg.flags[C_f];
+        value = (readByteAndIncrementPC(mode) << 1) + reg.flags[C_f];
         reg.PC = PC_save;
-        writeMem_c1(mode, value & 0xFF);
+        writeByte(mode, value & 0xFF);
       }
       reg.flags[N_f] = value & 0x80;
       reg.flags[Z_f] = value == 0x00;
@@ -176,10 +176,10 @@ void CPU_6502::step() {
         reg.A = value;
       } else {
         uint16_t PC_save = reg.PC;
-        previous = getMemAndIncrementPC(mode);
+        previous = readByteAndIncrementPC(mode);
         value = (previous >> 1);
         reg.PC = PC_save;
-        writeMem_c1(mode, value);
+        writeByte(mode, value);
       }
       reg.flags[N_f] = value & 0x80;
       reg.flags[Z_f] = value == 0x00;
@@ -195,10 +195,10 @@ void CPU_6502::step() {
         reg.A = value;
       } else {
         uint16_t PC_save = reg.PC;
-        previous = getMemAndIncrementPC(mode);
+        previous = readByteAndIncrementPC(mode);
         value = (previous >> 1);
         reg.PC = PC_save;
-        writeMem_c1(mode, value);
+        writeByte(mode, value);
       }
       reg.flags[N_f] = value & 0x80;
       reg.flags[Z_f] = value == 0x00;
@@ -208,16 +208,16 @@ void CPU_6502::step() {
     case STX: {
       switch (mode) {
       case ZERO_PAGE:
-        writeMem_c1(ZPG, reg.X);
+        writeByte(ZPG, reg.X);
         break;
       case IMPLIED:
         reg.A = reg.X;
         break;
       case ABSOLUTE:
-        writeMem_c1(ABS, reg.X);
+        writeByte(ABS, reg.X);
         break;
       case ZERO_PAGE_IDX:
-        writeMem_c1(ZPG_Y, reg.X);
+        writeByte(ZPG_Y, reg.X);
         break;
       case STACK:
         reg.SP = reg.X;
@@ -228,25 +228,25 @@ void CPU_6502::step() {
     case LDX: {
       switch (mode) {
       case IMMEDIATE:
-        reg.X = getMemAndIncrementPC(IMM);
+        reg.X = readByteAndIncrementPC(IMM);
         break;
       case ZERO_PAGE:
-        reg.X = getMemAndIncrementPC(ZPG);
+        reg.X = readByteAndIncrementPC(ZPG);
         break;
       case IMPLIED:
         reg.X = reg.A;
         break;
       case ABSOLUTE:
-        reg.X = getMemAndIncrementPC(ABS);
+        reg.X = readByteAndIncrementPC(ABS);
         break;
       case ZERO_PAGE_IDX:
-        reg.X = getMemAndIncrementPC(ZPG_Y);
+        reg.X = readByteAndIncrementPC(ZPG_Y);
         break;
       case STACK:
         reg.X = reg.SP;
         break;
       case ABSOLUTE_IDX:
-        reg.X = getMemAndIncrementPC(ABS_Y);
+        reg.X = readByteAndIncrementPC(ABS_Y);
         break;
       }
       reg.flags[N_f] = reg.X & 0x80;
@@ -257,23 +257,23 @@ void CPU_6502::step() {
       uint8_t value{};
       switch (mode) {
       case ZERO_PAGE:
-        value = getMem(ZPG) - 1;
-        writeMem_c1(ZPG, value);
+        value = readByte(ZPG) - 1;
+        writeByte(ZPG, value);
         break;
       case IMPLIED:
         value = --reg.X;
         break;
       case ABSOLUTE:
-        value = getMem(ABS) - 1;
-        writeMem_c1(ABS, value);
+        value = readByte(ABS) - 1;
+        writeByte(ABS, value);
         break;
       case ZERO_PAGE_IDX:
-        value = getMem(ZPG_X) - 1;
-        writeMem_c1(ZPG_X, value);
+        value = readByte(ZPG_X) - 1;
+        writeByte(ZPG_X, value);
         break;
       case ABSOLUTE_IDX:
-        value = getMem(ABS_X) - 1;
-        writeMem_c1(ABS_X, value);
+        value = readByte(ABS_X) - 1;
+        writeByte(ABS_X, value);
         break;
       }
       reg.flags[N_f] = value & 0x80;
@@ -284,23 +284,23 @@ void CPU_6502::step() {
       uint8_t value{};
       switch (mode) {
       case ZERO_PAGE:
-        value = getMem(ZPG) + 1;
-        writeMem_c1(ZPG, value);
+        value = readByte(ZPG) + 1;
+        writeByte(ZPG, value);
         break;
       case IMPLIED:
         value = ++reg.X;
         break;
       case ABSOLUTE:
-        value = getMem(ABS) + 1;
-        writeMem_c1(ABS, value);
+        value = readByte(ABS) + 1;
+        writeByte(ABS, value);
         break;
       case ZERO_PAGE_IDX:
-        value = getMem(ZPG_X) + 1;
-        writeMem_c1(ZPG_X, value);
+        value = readByte(ZPG_X) + 1;
+        writeByte(ZPG_X, value);
         break;
       case ABSOLUTE_IDX:
-        value = getMem(ABS_X) + 1;
-        writeMem_c1(ABS_X, value);
+        value = readByte(ABS_X) + 1;
+        writeByte(ABS_X, value);
         break;
       }
       reg.flags[N_f] = value & 0x80;
@@ -333,7 +333,7 @@ template <typename T> std::string CPU_6502::print_hex(T a) {
 
 /******* Private functions *******/
 
-uint16_t CPU_6502::getAddress_c1(uint8_t mode) {
+uint16_t CPU_6502::readAddressAndIncrementPC(uint8_t mode) {
   uint16_t result = 0x00;
   switch (mode) {
   case X_IND:
@@ -383,23 +383,23 @@ uint16_t CPU_6502::getAddress_c1(uint8_t mode) {
   return result;
 }
 
-uint8_t CPU_6502::getMemAndIncrementPC(uint8_t mode) {
-  return ram->readByte(getAddress_c1(mode));
+uint8_t CPU_6502::readByteAndIncrementPC(uint8_t mode) {
+  return ram->readByte(readAddressAndIncrementPC(mode));
 }
 
-uint8_t CPU_6502::getMem(uint8_t mode) {
+uint8_t CPU_6502::readByte(uint8_t mode) {
   uint16_t PC_save = reg.PC;
-  uint16_t address = getAddress_c1(mode);
+  uint16_t address = readAddressAndIncrementPC(mode);
   uint8_t value = ram->readByte(address);
   reg.PC = PC_save; // Restore PC
   return value;
 }
 
-void CPU_6502::writeMem_c1(uint8_t mode, uint8_t value) {
+void CPU_6502::writeByte(uint8_t mode, uint8_t value) {
   if (mode == IMM) { // Can't write to an immediate value because it is
                      // not an address
     // Raise error
     return;
   }
-  ram->writeByte(getAddress_c1(mode), value);
+  ram->writeByte(readAddressAndIncrementPC(mode), value);
 }

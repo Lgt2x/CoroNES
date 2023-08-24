@@ -20,7 +20,7 @@ struct NES_Test {
  * Create a CPU and Bus object with a given program,
  * located at address 0x800.
  */
-inline NES_Test setupTest(std::vector<std::string> program, uint16_t startAddress) {
+inline NES_Test setupTest(std::vector<std::string> program, uint16_t startAddress=0x800) {
   auto mapper = std::make_unique<DummyMapper>();
   auto bus = std::make_unique<Bus>(mapper.get());
 
@@ -40,6 +40,12 @@ inline NES_Test setupTest(std::vector<std::string> program, uint16_t startAddres
   cpu->reset();
 
   return NES_Test{std::move(cpu), std::move(bus)};
+}
+
+inline NES_Test setupTestAndExecute(std::vector<std::string> program, uint16_t startAddress=0x800) {
+  NES_Test fixture = setupTest(program, startAddress);
+  fixture.cpu->step(program.size());
+  return std::move(fixture);
 }
 
 }
