@@ -32,7 +32,7 @@ public:
 
   void reset();
 
-  void print_state() const;
+  void printState() const;
   Registers dumpRegisters() { return reg; };
 
   template <typename T> static std::string print_hex(T a);

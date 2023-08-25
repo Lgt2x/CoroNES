@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <bitset>
+#include <csetjmp>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
@@ -69,10 +70,122 @@ void CPU_6502::step() {
   uint8_t value = 0x0;
 
   switch (category) {
-  case 0b00:
-    std::cout << "Not supported yet." << std::endl;
+  case 0b00: {
+    if (mode == 2 && instruction <= 3) {
+      switch (instruction) {
+      case BRK:
+        break;
+      case JSR:
+        break;
+      case RTI:
+        break;
+      case RTS:
+        break;
+      }
+    } else if (mode == 2) {
+      switch (instruction) {
+      case PHP:
+        break;
+      case PLP:
+        break;
+      case PHA:
+        break;
+      case PLA:
+        break;
+      case DEY:
+        break;
+      case TAY:
+        break;
+      case INY:
+        break;
+      case INX:
+        break;
+      }
+    } else if (mode == 4) {
+      bool doJump = false;
+      switch (instruction) {
+      case BPL:
+        doJump = !reg.flags[N_f];
+        break;
+      case BMI:
+        doJump = reg.flags[N_f];
+        break;
+      case BVC:
+        doJump = !reg.flags[V_f];
+        break;
+      case BVS:
+        doJump = reg.flags[V_f];
+        break;
+      case BCC:
+        doJump = !reg.flags[C_f];
+        break;
+      case BCS:
+        doJump = reg.flags[C_f];
+        break;
+      case BNE:
+        doJump = !reg.flags[Z_f];
+        break;
+      case BEQ:
+        doJump = reg.flags[Z_f];
+        break;
+      }
+
+      if (doJump) {
+        reg.PC += (int8_t)(ram->readByte(reg.PC));
+      }
+
+      reg.PC+=1;
+
+    } else if (mode == 6) {
+      switch (instruction) {
+      case CLC:
+        reg.flags[C_f] = false;
+        break;
+      case SEC:
+        reg.flags[C_f] = true;
+        break;
+      case CLI:
+        reg.flags[I_f] = false;
+        break;
+      case SEI:
+        reg.flags[I_f] = true;
+        break;
+      case TYA:
+        reg.A = reg.Y;
+        break;
+      case CLV:
+        reg.flags[V_f] = false;
+        break;
+      case CLD:
+        reg.flags[D_f] = false;
+        break;
+      case SED:
+        reg.flags[D_f] = true;
+        break;
+      }
+    } else {
+      enum adressingModes_c0 { ZPG_c0 = 1, ABS_c0 = 3, ZPG_X = 5, ABS_X = 7 };
+
+      switch (instruction) {
+      case BIT:
+        break;
+      case JMP_abs:
+        break;
+      case JMP_ind:
+        break;
+      case STY:
+        break;
+      case LDY:
+        break;
+      case CPY:
+        break;
+      case CPX:
+        break;
+      }
+    }
     break;
-  case 0b01:
+  }
+  case 0b01: {
     switch (instruction) {
     case ORA: // OR memory with accumulator
       reg.A |= this->readByteAndIncrementPC(mode);
@@ -92,17 +205,18 @@ void CPU_6502::step() {
     case ADC: { // Add memory to accumulator with carry
       uint8_t operand = readByteAndIncrementPC(mode);
       uint16_t res = reg.A + operand;
-      reg.A = res & 0xFF;
-      reg.flags[C_f] = (res >> 8) > 0; // Set the carry
-      // Set the overflow (V_f) flag. Is it set when the result changed the sign
+
+      // The overflow (V_f) flag is set when the result changed the sign
       // bit when it should not have. e.g. when both input numbers have the sign
-      // bit off but the result has the sign bit on. There is probably a more
-      // efficient way to do this. See http://www.6502.org/tutorials/vflag.html
-      // for full explanation
-      reg.flags[V_f] = (reg.A & 0x80 && operand & 0x80 && !(res & 0x80)) ||
-                       (!(reg.A & 0x80) && operand & 0x80 && res & 0x80);
-      reg.flags[N_f] = reg.A & 0x80;
-      reg.flags[Z_f] = reg.A == 0;
+      // bit off but the result has the sign bit on.
+      // See http://www.6502.org/tutorials/vflag.html
+      reg.flags[V_f] = ((reg.A & 0x80) && (operand & 0x80) && !(res & 0x80)) ||
+                       (!(reg.A & 0x80) && !(operand & 0x80) && res & 0x80);
+      reg.flags[C_f] = res & 0x100;
+      reg.flags[N_f] = res & 0x80;
+      reg.flags[Z_f] = res == 0;
+
+      reg.A = res & 0xFF;
       break;
     }
     case STA: // Store accumulator to memory
@@ -133,7 +247,8 @@ void CPU_6502::step() {
     }
     }
     break;
-  case 0b10:
+  }
+  case 0b10: {
     switch (instruction) {
     case ASL: {
       uint16_t value{};
@@ -308,6 +423,8 @@ void CPU_6502::step() {
       break;
     }
     }
+    break;
+  }
   }
 }
 
@@ -318,7 +435,7 @@ void CPU_6502::step(int nbSteps) {
 
 /******* Debug functions *******/
 
-void CPU_6502::print_state() const {
+void CPU_6502::printState() const {
   std::cout << "A=$" << print_hex(reg.A) << " X=$" << print_hex(reg.X) << " Y=$"
             << print_hex(reg.Y) << " PC=$" << print_hex(reg.PC) << " SP=$"
             << print_hex(reg.SP) << " flags=0b" << std::bitset<8>{42}

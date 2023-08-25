@@ -32,7 +32,6 @@ Original by Bernd Boeckmann, BSD-3 license
 #define SET_TYPE(v, u) ((v).t = (u))
 #define NUM_TYPE(x) (((x) < 0x100) ? TYPE_BYTE : TYPE_WORD)
 
-
 namespace {
 
 typedef unsigned char u8;
@@ -52,64 +51,175 @@ typedef struct value {
 } value;
 
 enum { OP_RTS = 0x60, OP_JSR = 0x20, INV = 0xfc };
- instruction_desc itbl_6502[56] = {
-   {"ADC", {INV,  INV,  0x69, INV,  0x65, 0x75, INV,  0x6d, 0x7d, 0x79, INV,  0x61, 0x71, INV, INV, INV}},
-   {"AND", {INV,  INV,  0x29, INV,  0x25, 0x35, INV,  0x2d, 0x3d, 0x39, INV,  0x21, 0x31, INV, INV, INV}},
-   {"ASL", {0x0a, INV,  INV,  INV,  0x06, 0x16, INV,  0x0e, 0x1e, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BCC", {INV,  INV,  INV,  0x90, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BCS", {INV,  INV,  INV,  0xb0, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BEQ", {INV,  INV,  INV,  0xf0, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BIT", {INV,  INV,  INV,  INV,  0x24, INV,  INV,  0x2c, INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BMI", {INV,  INV,  INV,  0x30, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BNE", {INV,  INV,  INV,  0xd0, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BPL", {INV,  INV,  INV,  0x10, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BRK", {INV,  0x00, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BVC", {INV,  INV,  INV,  0x50, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"BVS", {INV,  INV,  INV,  0x70, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"CLC", {INV,  0x18, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"CLD", {INV,  0xd8, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"CLI", {INV,  0x58, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"CLV", {INV,  0xb8, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"CMP", {INV,  INV,  0xc9, INV,  0xc5, 0xd5, INV,  0xcd, 0xdd, 0xd9, INV,  0xc1, 0xd1, INV, INV, INV}},
-   {"CPX", {INV,  INV,  0xe0, INV,  0xe4, INV,  INV,  0xec, INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"CPY", {INV,  INV,  0xc0, INV,  0xc4, INV,  INV,  0xcc, INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"DEC", {INV,  INV,  INV,  INV,  0xc6, 0xd6, INV,  0xce, 0xde, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"DEX", {INV,  0xca, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"DEY", {INV,  0x88, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"EOR", {INV,  INV,  0x49, INV,  0x45, 0x55, INV,  0x4d, 0x5d, 0x59, INV,  0x41, 0x51, INV, INV, INV}},
-   {"INC", {INV,  INV,  INV,  INV,  0xe6, 0xf6, INV,  0xee, 0xfe, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"INX", {INV,  0xe8, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"INY", {INV,  0xc8, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"JMP", {INV,  INV,  INV,  INV,  INV,  INV,  INV,  0x4c, INV,  INV,  0x6c, INV,  INV,  INV, INV, INV}},
-   {"JSR", {INV,  INV,  INV,  INV,  INV,  INV,  INV,  0x20, INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"LDA", {INV,  INV,  0xa9, INV,  0xa5, 0xb5, INV,  0xad, 0xbd, 0xb9, INV,  0xa1, 0xb1, INV, INV, INV}},
-   {"LDX", {INV,  INV,  0xa2, INV,  0xa6, INV,  0xb6, 0xae, INV,  0xbe, INV,  INV,  INV,  INV, INV, INV}},
-   {"LDY", {INV,  INV,  0xa0, INV,  0xa4, 0xb4, INV,  0xac, 0xbc, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"LSR", {0x4a, INV,  INV,  INV,  0x46, 0x56, INV,  0x4e, 0x5e, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"NOP", {INV,  0xea, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"ORA", {INV,  INV,  0x09, INV,  0x05, 0x15, INV,  0x0d, 0x1d, 0x19, INV,  0x01, 0x11, INV, INV, INV}},
-   {"PHA", {INV,  0x48, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"PHP", {INV,  0x08, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"PLA", {INV,  0x68, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"PLP", {INV,  0x28, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"ROL", {0x2a, INV,  INV,  INV,  0x26, 0x36, INV,  0x2e, 0x3e, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"ROR", {0x6a, INV,  INV,  INV,  0x66, 0x76, INV,  0x6e, 0x7e, INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"RTI", {INV,  0x40, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"RTS", {INV,  0x60, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"SBC", {INV,  INV,  0xe9, INV,  0xe5, 0xf5, INV,  0xed, 0xfd, 0xf9, INV,  0xe1, 0xf1, INV, INV, INV}},
-   {"SEC", {INV,  0x38, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"SED", {INV,  0xf8, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"SEI", {INV,  0x78, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"STA", {INV,  INV,  INV,  INV,  0x85, 0x95, INV,  0x8d, 0x9d, 0x99, INV,  0x81, 0x91, INV, INV, INV}},
-   {"STX", {INV,  INV,  INV,  INV,  0x86, INV,  0x96, 0x8e, INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"STY", {INV,  INV,  INV,  INV,  0x84, 0x94, INV,  0x8c, INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"TAX", {INV,  0xaa, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"TAY", {INV,  0xa8, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"TSX", {INV,  0xba, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"TXA", {INV,  0x8a, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"TXS", {INV,  0x9a, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}},
-   {"TYA", {INV,  0x98, INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV,  INV, INV, INV}}
-};
+instruction_desc itbl_6502[56] = {
+    {"ADC",
+     {INV, INV, 0x69, INV, 0x65, 0x75, INV, 0x6d, 0x7d, 0x79, INV, 0x61, 0x71,
+      INV, INV, INV}},
+    {"AND",
+     {INV, INV, 0x29, INV, 0x25, 0x35, INV, 0x2d, 0x3d, 0x39, INV, 0x21, 0x31,
+      INV, INV, INV}},
+    {"ASL",
+     {0x0a, INV, INV, INV, 0x06, 0x16, INV, 0x0e, 0x1e, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BCC",
+     {INV, INV, INV, 0x90, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BCS",
+     {INV, INV, INV, 0xb0, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BEQ",
+     {INV, INV, INV, 0xf0, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BIT",
+     {INV, INV, INV, INV, 0x24, INV, INV, 0x2c, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BMI",
+     {INV, INV, INV, 0x30, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BNE",
+     {INV, INV, INV, 0xd0, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BPL",
+     {INV, INV, INV, 0x10, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BRK",
+     {INV, 0x00, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BVC",
+     {INV, INV, INV, 0x50, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"BVS",
+     {INV, INV, INV, 0x70, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"CLC",
+     {INV, 0x18, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"CLD",
+     {INV, 0xd8, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"CLI",
+     {INV, 0x58, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"CLV",
+     {INV, 0xb8, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"CMP",
+     {INV, INV, 0xc9, INV, 0xc5, 0xd5, INV, 0xcd, 0xdd, 0xd9, INV, 0xc1, 0xd1,
+      INV, INV, INV}},
+    {"CPX",
+     {INV, INV, 0xe0, INV, 0xe4, INV, INV, 0xec, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"CPY",
+     {INV, INV, 0xc0, INV, 0xc4, INV, INV, 0xcc, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"DEC",
+     {INV, INV, INV, INV, 0xc6, 0xd6, INV, 0xce, 0xde, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"DEX",
+     {INV, 0xca, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"DEY",
+     {INV, 0x88, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"EOR",
+     {INV, INV, 0x49, INV, 0x45, 0x55, INV, 0x4d, 0x5d, 0x59, INV, 0x41, 0x51,
+      INV, INV, INV}},
+    {"INC",
+     {INV, INV, INV, INV, 0xe6, 0xf6, INV, 0xee, 0xfe, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"INX",
+     {INV, 0xe8, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"INY",
+     {INV, 0xc8, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"JMP",
+     {INV, INV, INV, INV, INV, INV, INV, 0x4c, INV, INV, 0x6c, INV, INV, INV,
+      INV, INV}},
+    {"JSR",
+     {INV, INV, INV, INV, INV, INV, INV, 0x20, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"LDA",
+     {INV, INV, 0xa9, INV, 0xa5, 0xb5, INV, 0xad, 0xbd, 0xb9, INV, 0xa1, 0xb1,
+      INV, INV, INV}},
+    {"LDX",
+     {INV, INV, 0xa2, INV, 0xa6, INV, 0xb6, 0xae, INV, 0xbe, INV, INV, INV, INV,
+      INV, INV}},
+    {"LDY",
+     {INV, INV, 0xa0, INV, 0xa4, 0xb4, INV, 0xac, 0xbc, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"LSR",
+     {0x4a, INV, INV, INV, 0x46, 0x56, INV, 0x4e, 0x5e, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"NOP",
+     {INV, 0xea, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"ORA",
+     {INV, INV, 0x09, INV, 0x05, 0x15, INV, 0x0d, 0x1d, 0x19, INV, 0x01, 0x11,
+      INV, INV, INV}},
+    {"PHA",
+     {INV, 0x48, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"PHP",
+     {INV, 0x08, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"PLA",
+     {INV, 0x68, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"PLP",
+     {INV, 0x28, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"ROL",
+     {0x2a, INV, INV, INV, 0x26, 0x36, INV, 0x2e, 0x3e, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"ROR",
+     {0x6a, INV, INV, INV, 0x66, 0x76, INV, 0x6e, 0x7e, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"RTI",
+     {INV, 0x40, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"RTS",
+     {INV, 0x60, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"SBC",
+     {INV, INV, 0xe9, INV, 0xe5, 0xf5, INV, 0xed, 0xfd, 0xf9, INV, 0xe1, 0xf1,
+      INV, INV, INV}},
+    {"SEC",
+     {INV, 0x38, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"SED",
+     {INV, 0xf8, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"SEI",
+     {INV, 0x78, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"STA",
+     {INV, INV, INV, INV, 0x85, 0x95, INV, 0x8d, 0x9d, 0x99, INV, 0x81, 0x91,
+      INV, INV, INV}},
+    {"STX",
+     {INV, INV, INV, INV, 0x86, INV, 0x96, 0x8e, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"STY",
+     {INV, INV, INV, INV, 0x84, 0x94, INV, 0x8c, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"TAX",
+     {INV, 0xaa, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"TAY",
+     {INV, 0xa8, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"TSX",
+     {INV, 0xba, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"TXA",
+     {INV, 0x8a, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"TXS",
+     {INV, 0x9a, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}},
+    {"TYA",
+     {INV, 0x98, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV, INV,
+      INV, INV}}};
 
 /* addressing modes */
 enum {
@@ -131,7 +241,6 @@ enum {
   AM_ZPR = 15, /* ZP,R    zero-page, relative               */
   AM_INV = 16
 };
-
 
 } // anonymous namespace
 
@@ -215,9 +324,7 @@ private:
     longjmp(error_jmp, err);
   }
 
-  void emit_byte(u8 b) {
-    code.push_back(b);
-  }
+  void emit_byte(u8 b) { code.push_back(b); }
 
   enum { TYPE_BYTE = 1, TYPE_WORD = 2 };
 
@@ -257,29 +364,28 @@ private:
 
   /* emit instruction without argument */
   void emit_instr_0(instruction_desc *instr, int am) {
-        code.push_back(instr->op[am]);
+    code.push_back(instr->op[am]);
   }
 
   /* emit instruction with byte argument */
   void emit_instr_1(instruction_desc *instr, int am, u8 o) {
-        code.push_back(instr->op[am]);
-        code.push_back(o);
-
+    code.push_back(instr->op[am]);
+    code.push_back(o);
   }
 
   /* emit instruction with word argument */
   void emit_instr_2(instruction_desc *instr, int am, u16 o) {
-        code.push_back(instr->op[am]);
-        code.push_back(o & 0xff);
-        code.push_back(o >> 8);
+    code.push_back(instr->op[am]);
+    code.push_back(o & 0xff);
+    code.push_back(o >> 8);
   }
 
   /* emit instruction with two byte arguments */
   void emit_instr_2b(instruction_desc *instr, int am, u8 byte1, u8 byte2) {
-        code.push_back(instr->op[am]);
-        code.push_back(byte1);
-        code.push_back(byte2);
- }
+    code.push_back(instr->op[am]);
+    code.push_back(byte1);
+    code.push_back(byte2);
+  }
 
 /* Parse a number, either in hex, binary or decimal */
 #define IS_HEX_DIGIT(x)                                                        \
@@ -365,27 +471,16 @@ private:
   }
 
   u16 calculate_offset(value v) {
-    u16 pct = address_counter + 2u;
     u16 off;
 
     /* relative branch offsets are in 2-complement */
     /* have to calculate it by hand avoiding implementation defined behaviour */
     /* using unsigned int because int may not be in 2-complement */
-    if (pass_num == 2) {
-      if (UNDEFINED(v))
-        error(ERR_UNDEF);
 
-      if ((v.v >= pct) && ((u16)(v.v - pct) > 127u))
-        error(ERR_RELATIVE_RANGE);
-      else {
-        if ((pct > v.v) && ((u16)(pct - v.v) > 128u))
-          error(ERR_RELATIVE_RANGE);
-      }
-    }
-    if (v.v >= pct)
-      off = v.v - pct;
+    if (v.v >= 0)
+      off = v.v;
     else
-      off = (u16)((~0u) - (pct - v.v - 1u));
+      off = (u16)((~0u) + v.v + 1u);
     return off;
   }
 
