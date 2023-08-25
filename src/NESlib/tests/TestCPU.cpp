@@ -131,22 +131,6 @@ TEST_CASE("CPU supports all 6502 opcodes") {
       CHECK(fixture.cpu->dumpRegisters().flags[I_f]);
     }
 
-    SUBCASE("TYA") {
-      auto fixture = TestFixture::setupTest({
-          "LDA #$20",
-          "STA $10",
-          "LDY $10",
-          "LDA #$10",
-          "TYA",
-      });
-
-      // TODO
-      // fixture.cpu->step(4);
-      // CHECK(fixture.cpu->dumpRegisters().A == 0x10);
-      // fixture.cpu->step();
-      // CHECK(fixture.cpu->dumpRegisters().A == 0x20);
-    }
-
     SUBCASE("CLV") {
       auto fixture = TestFixture::setupTest({
           "LDA #$40",
@@ -174,6 +158,61 @@ TEST_CASE("CPU supports all 6502 opcodes") {
       CHECK_FALSE(fixture.cpu->dumpRegisters().flags[D_f]);
       fixture.cpu->step();
       CHECK(fixture.cpu->dumpRegisters().flags[D_f]);
+    }
+
+    SUBCASE("TYA") {
+      auto fixture = TestFixture::setupTest({
+          "LDA #$20",
+          "STA $10",
+          "LDY $10",
+          "LDA #$10",
+          "TYA",
+      });
+
+      // TODO
+      // fixture.cpu->step(4);
+      // CHECK(fixture.cpu->dumpRegisters().A == 0x10);
+      // fixture.cpu->step();
+      // CHECK(fixture.cpu->dumpRegisters().A == 0x20);
+    }
+
+    SUBCASE("TAY") {
+      auto fixture = TestFixture::setupTestAndExecute({
+          "LDA #$10",
+          "TAY",
+      });
+
+      CHECK(fixture.cpu->dumpRegisters().Y == 0x10);
+    }
+
+    SUBCASE("DEY") {
+      auto fixture = TestFixture::setupTestAndExecute({
+          "LDA #$10",
+          "TAY",
+          "DEY",
+      });
+
+      CHECK(fixture.cpu->dumpRegisters().Y == 0x0F);
+      // TODO : test overflow / underflow, flags
+    }
+
+    SUBCASE("INY") {
+      auto fixture = TestFixture::setupTestAndExecute({
+          "LDA #$10",
+          "TAY",
+          "INY",
+      });
+
+      CHECK(fixture.cpu->dumpRegisters().Y == 0x11);
+    }
+
+    SUBCASE("INX") {
+      auto fixture = TestFixture::setupTestAndExecute({
+          "LDX #$10",
+          "INX",
+      });
+
+      CHECK(fixture.cpu->dumpRegisters().X == 0x11);
     }
 
     SUBCASE("Branch instructions") {
@@ -320,6 +359,63 @@ TEST_CASE("CPU supports all 6502 opcodes") {
 
         fixture.cpu->step(4);
         CHECK(fixture.cpu->dumpRegisters().A == 0x20);
+      }
+    }
+
+    SUBCASE("Stack operations") {
+      SUBCASE("PHA") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$20",
+            "PHA",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().A == 0x20);
+        CHECK(fixture.cpu->dumpRegisters().SP == 0xFC);
+        CHECK(fixture.bus->readByte(0xFD) == 0x20);
+      }
+
+      SUBCASE("PLA") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$20",
+            "PHA",
+            "LDA #$40",
+            "PLA",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().A == 0x20);
+        CHECK(fixture.cpu->dumpRegisters().SP == 0xFD);
+      }
+
+      SUBCASE("PHP") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "PHP",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().SP == 0xFC);
+        CHECK(fixture.bus->readByte(0xFD) == 0x34); // CPU status startup value
+      }
+
+      SUBCASE("PLP") {
+        auto fixture = TestFixture::setupTest({
+            "LDA #$00", // set 0 flag
+            "PHP",
+            "LDA #$80", // set negative flag
+            "PLP",
+        });
+
+        fixture.cpu->step();
+        CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+        CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+
+        fixture.cpu->step(2);
+        CHECK(fixture.cpu->dumpRegisters().SP == 0xFC);
+        CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+        CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+
+        fixture.cpu->step();
+        CHECK(fixture.cpu->dumpRegisters().SP == 0xFD);
+        CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+        CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
       }
     }
   }

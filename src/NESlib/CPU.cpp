@@ -71,7 +71,7 @@ void CPU_6502::step() {
 
   switch (category) {
   case 0b00: {
-    if (mode == 2 && instruction <= 3) {
+    if (mode == 0 && instruction <= 3) {
       switch (instruction) {
       case BRK:
         break;
@@ -85,20 +85,40 @@ void CPU_6502::step() {
     } else if (mode == 2) {
       switch (instruction) {
       case PHP:
+        ram->writeByte(reg.SP, reg.flags.to_ulong() & 0xFF);
+        --reg.SP;
         break;
       case PLP:
+        ++reg.SP;
+        reg.flags = ram->readByte(reg.SP);
         break;
       case PHA:
+        ram->writeByte(reg.SP, reg.A);
+        --reg.SP;
         break;
       case PLA:
+        ++reg.SP;
+        reg.A = ram->readByte(reg.SP);
         break;
       case DEY:
+        --reg.Y;
+        reg.flags[N_f] = reg.Y & 0x80;
+        reg.flags[Z_f] = reg.Y == 0;
         break;
       case TAY:
+        reg.Y = reg.A;
+        reg.flags[N_f] = reg.A & 0x80;
+        reg.flags[Z_f] = reg.A == 0;
         break;
       case INY:
+        ++reg.Y;
+        reg.flags[N_f] = reg.Y & 0x80;
+        reg.flags[Z_f] = reg.Y == 0;
         break;
       case INX:
+        ++reg.X;
+        reg.flags[N_f] = reg.X & 0x80;
+        reg.flags[Z_f] = reg.X == 0;
         break;
       }
     } else if (mode == 4) {
@@ -134,7 +154,7 @@ void CPU_6502::step() {
         reg.PC += (int8_t)(ram->readByte(reg.PC));
       }
 
-      reg.PC+=1;
+      reg.PC += 1;
 
     } else if (mode == 6) {
       switch (instruction) {
@@ -152,6 +172,8 @@ void CPU_6502::step() {
         break;
       case TYA:
         reg.A = reg.Y;
+        reg.flags[N_f] = reg.A & 0x80;
+        reg.flags[Z_f] = reg.A == 0;
         break;
       case CLV:
         reg.flags[V_f] = false;
