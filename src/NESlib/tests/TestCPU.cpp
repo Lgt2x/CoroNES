@@ -418,6 +418,51 @@ TEST_CASE("CPU supports all 6502 opcodes") {
         CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
       }
     }
+
+    SUBCASE("BRK & RTI") {
+      auto fixture = TestFixture::setupTest({
+          "LDA #$10",
+          "BRK",
+          "NOP", // Spacing for break mark
+          "LDA #$30",
+          "NOP",
+          "NOP",
+          "NOP",
+          "NOP",
+          "LDA #$00",
+          "RTI",
+      });
+
+      // Set interrupt vector
+      uint16_t IRQ_address = 0x80A;
+      fixture.bus->writeByte(0xFFFE, (uint8_t)(IRQ_address & 0xFF));
+      fixture.bus->writeByte(0xFFFF, (IRQ_address >> 8) & 0xFF);
+      fixture.cpu.get()->reset();
+
+      // LDA && BRK
+      fixture.cpu->step(2);
+      CHECK(fixture.cpu->dumpRegisters().PC == IRQ_address);
+      CHECK(fixture.cpu->dumpRegisters().flags[B_f]);
+      CHECK(fixture.cpu->dumpRegisters().flags[I_f]);
+      CHECK(fixture.cpu->dumpRegisters().SP == (0xFD - 0x03));
+      CHECK(fixture.bus->readByte(0xFD) == ((0x802 + 2) >> 8));
+      CHECK(fixture.bus->readByte(0xFC) == ((0x802 + 2) & 0xFF));
+      CHECK_FALSE(fixture.bus->readByte(0xFB) == 0x00);
+
+      // LDA
+      fixture.cpu->step();
+      CHECK(fixture.cpu->dumpRegisters().PC == IRQ_address + 2);
+      CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK(fixture.cpu->dumpRegisters().A == 0x00);
+
+      // RTI && LDA
+      fixture.cpu->step(2);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[B_f]);
+      CHECK_FALSE(fixture.cpu->dumpRegisters().flags[I_f]);
+      CHECK(fixture.cpu->dumpRegisters().A == 0x30);
+      CHECK(fixture.cpu->dumpRegisters().PC == 0x806);
+    }
   }
   SUBCASE("Opcodes ending by 0b01") {
     SUBCASE("ORA") {

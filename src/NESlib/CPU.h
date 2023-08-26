@@ -17,7 +17,10 @@ private:
     std::bitset<8> flags{0x34}; // Status register, NVBDIZC
     uint8_t SP = 0xFD;          // Stack pointer
   } reg;
+
+  uint16_t nmi_vector{};
   uint16_t reset_vector{};
+  uint16_t irq_vector{};
 
   uint16_t readAddressAndIncrementPC(uint8_t mode);
   uint8_t readByteAndIncrementPC(uint8_t mode);

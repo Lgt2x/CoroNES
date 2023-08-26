@@ -44,7 +44,10 @@ enum flags { N_f, V_f, B_f, D_f, I_f, Z_f, C_f };
 CPU_6502::CPU_6502(Bus *ram) : ram(ram) { CPU_6502::reset(); }
 
 void CPU_6502::reset() {
+  nmi_vector = ram->readByte(0xFFFA) | (ram->readByte(0xFFFB) << 8);
   reset_vector = ram->readByte(0xFFFC) | (ram->readByte(0xFFFD) << 8);
+  irq_vector = ram->readByte(0xFFFE) | (ram->readByte(0xFFFF) << 8);
+
   reg.PC = reset_vector;
   reg.flags = std::bitset<8>{0b00110100};
 }
@@ -74,10 +77,21 @@ void CPU_6502::step() {
     if (mode == 0 && instruction <= 3) {
       switch (instruction) {
       case BRK:
+        reg.PC += 1;
+        ram->writeByte(reg.SP--, (reg.PC >> 8) & 0xFF);
+        ram->writeByte(reg.SP--, (reg.PC & 0xFF));
+        reg.flags[B_f] = true;
+        ram->writeByte(reg.SP--, (uint8_t)(reg.flags.to_ulong()));
+        reg.flags[I_f] = true;
+        reg.PC = irq_vector;
         break;
       case JSR:
         break;
       case RTI:
+        reg.flags = ram->readByte(++reg.SP);
+        reg.flags[B_f] = false;
+        reg.flags[I_f] = false;
+        reg.PC = ram->readByte(++reg.SP) + (ram->readByte(++reg.SP) << 8);
         break;
       case RTS:
         break;

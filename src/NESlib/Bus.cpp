@@ -1,13 +1,11 @@
+#include "Bus.h"
 #include <iomanip>
 #include <iostream>
-#include "Bus.h"
 
-Bus::Bus(Mapper *mapper) : mapper(mapper) {
-  ram.resize(0xFFFF + 1, 0);
-}
+Bus::Bus(Mapper *mapper) : mapper(mapper) { ram.resize(0xFFFF + 1, 0); }
 
 void Bus::writeByte(uint16_t address, uint8_t value) {
-  if (address <= 0x1FFF) {
+  if (address <= 0x401F) {
     // Internal RAM & mirrors
     ram.at(address % 0x800) = value;
   } else {
