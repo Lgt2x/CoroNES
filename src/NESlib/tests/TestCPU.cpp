@@ -463,6 +463,122 @@ TEST_CASE("CPU supports all 6502 opcodes") {
       CHECK(fixture.cpu->dumpRegisters().A == 0x30);
       CHECK(fixture.cpu->dumpRegisters().PC == 0x806);
     }
+
+    SUBCASE("JSR & RTS") {
+      auto fixture = TestFixture::setupTest({
+          "JSR $0806",
+          "NOP",
+          "NOP",
+          "NOP",
+          "RTS",
+      });
+
+      fixture.cpu->step();
+      CHECK(fixture.cpu->dumpRegisters().PC == 0x806);
+      CHECK(fixture.bus->readByte(0xFD) == 0x08);
+      CHECK(fixture.bus->readByte(0xFC) == 0x03);
+
+      fixture.cpu->step();
+      CHECK(fixture.cpu->dumpRegisters().PC == 0x803);
+    }
+
+    SUBCASE("JMP") {
+      SUBCASE("JMP Absolute") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "JMP $0812",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().PC == 0x812);
+      }
+
+      SUBCASE("JMP Indirect") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$15",
+            "STA $0812",
+            "LDA #$43",
+            "STA $0813",
+            "JMP ($0812)",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().PC == 0x4315);
+      }
+    }
+
+    SUBCASE("BIT") {
+      SUBCASE("BIT zero page") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #%10100011",
+            "STA $12",
+            "LDA #%00011100",
+            "BIT $12",
+        });
+
+        CHECK_FALSE(fixture.cpu->dumpRegisters().flags[Z_f]);
+        CHECK(fixture.cpu->dumpRegisters().flags[N_f]);
+        CHECK_FALSE(fixture.cpu->dumpRegisters().flags[V_f]);
+      }
+
+      SUBCASE("BIT absolute") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #%01100011",
+            "STA $1234",
+            "LDA #%11000000",
+            "BIT $1234",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().flags[Z_f]);
+        CHECK_FALSE(fixture.cpu->dumpRegisters().flags[N_f]);
+        CHECK(fixture.cpu->dumpRegisters().flags[V_f]);
+      }
+    }
+
+    SUBCASE("LDY") {
+      SUBCASE("Immediate") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDY #$15",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().Y == 0x15);
+      }
+      SUBCASE("Zero Page") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$15",
+            "STA $20",
+            "LDY $20",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().Y == 0x15);
+      }
+      SUBCASE("Absolute") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$15",
+            "STA $2043",
+            "LDY $2043",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().Y == 0x15);
+      }
+      SUBCASE("Zero page X-indexed") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$15",
+            "LDX #$02",
+            "STA $19",
+            "LDY $17,X",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().Y == 0x15);
+      }
+      SUBCASE("Absolute X-indexed") {
+        auto fixture = TestFixture::setupTestAndExecute({
+            "LDA #$15",
+            "LDX #$02",
+            "STA $1920",
+            "LDY $1918,X",
+        });
+
+        CHECK(fixture.cpu->dumpRegisters().Y == 0x15);
+      }
+    }
   }
   SUBCASE("Opcodes ending by 0b01") {
     SUBCASE("ORA") {

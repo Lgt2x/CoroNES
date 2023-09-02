@@ -86,6 +86,9 @@ void CPU_6502::step() {
         reg.PC = irq_vector;
         break;
       case JSR:
+        ram->writeByte(reg.SP--, ((reg.PC + 2) >> 8) & 0xFF);
+        ram->writeByte(reg.SP--, ((reg.PC + 2) & 0xFF));
+        reg.PC = readAddressAndIncrementPC(ABS);
         break;
       case RTI:
         reg.flags = ram->readByte(++reg.SP);
@@ -94,6 +97,7 @@ void CPU_6502::step() {
         reg.PC = ram->readByte(++reg.SP) + (ram->readByte(++reg.SP) << 8);
         break;
       case RTS:
+        reg.PC = ram->readByte(++reg.SP) + (ram->readByte(++reg.SP) << 8);
         break;
       }
     } else if (mode == 2) {
@@ -200,19 +204,60 @@ void CPU_6502::step() {
         break;
       }
     } else {
-      enum adressingModes_c0 { ZPG_c0 = 1, ABS_c0 = 3, ZPG_X = 5, ABS_X = 7 };
-
+      enum adressingModes_c0 {
+        IMM_c0,
+        ZPG_c0,
+        ABS_c0 = 3,
+        ZPG_X = 5,
+        ABS_X = 7
+      };
       switch (instruction) {
-      case BIT:
+      case BIT: {
+        uint8_t value{};
+        if (mode == ZPG_c0) {
+          value = readByteAndIncrementPC(ZPG);
+        } else {
+          value = readByteAndIncrementPC(ABS);
+        }
+        reg.flags[Z_f] = value & reg.A;
+        reg.flags[N_f] = value & 0x80;
+        reg.flags[V_f] = value & 0x40;
         break;
+      }
       case JMP_abs:
+        reg.PC = readAddressAndIncrementPC(ABS);
         break;
-      case JMP_ind:
+      case JMP_ind: {
+        uint16_t indirectAddress =
+            ram->readByte(reg.PC) + (ram->readByte(reg.PC + 1) << 8);
+        reg.PC = ram->readByte(indirectAddress) +
+                 (ram->readByte(indirectAddress + 1) << 8);
         break;
+      }
       case STY:
         break;
-      case LDY:
+      case LDY: {
+        uint8_t value{};
+        switch (mode) {
+        case IMM_c0:
+          value = readByteAndIncrementPC(IMM);
+          break;
+        case ZPG_c0:
+          value = readByteAndIncrementPC(ZPG);
+          break;
+        case ABS_c0:
+          value = readByteAndIncrementPC(ABS);
+          break;
+        case ZPG_X:
+          value = readByteAndIncrementPC(ZPG_X);
+          break;
+        case ABS_X:
+          value = readByteAndIncrementPC(ABSOLUTE_IDX);
+          break;
+        }
+        reg.Y = value;
         break;
+      }
       case CPY:
         break;
       case CPX:
